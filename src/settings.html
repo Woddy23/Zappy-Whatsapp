@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WhatsApp na ficha — Definições</title><link rel="stylesheet" href="settings.css"></head>
+<body><main>
+  <p class="eyebrow">WHATSAPP NA FICHA · PILOTO ZAPPY</p>
+  <h1>Mensagens prontas.<br>O envio fica consigo.</h1>
+  <p class="intro">Na ficha do cliente, clique em <strong>WhatsApp ▾</strong> para rever a mensagem e abrir o WhatsApp. O envio é sempre manual.</p>
+
+  <section class="workflow-card">
+    <h2>Como funciona no dia a dia</h2>
+    <ol class="workflow-steps">
+      <li><strong>Abra a ficha do cliente</strong> no Zappy e clique no botão verde <strong>WhatsApp ▾</strong>.</li>
+      <li><strong>Escolha a mensagem</strong> (ex.: “Enviar link da app”, “Como entrar na app” ou “Contactar cliente”).</li>
+      <li><strong>Reveja ou ajuste o texto</strong> no campo de mensagem para aquele cliente específico.</li>
+      <li><strong>Abra o WhatsApp</strong> e envie. Se configurou uma imagem de apoio, copie-a e cole-a no chat (Ctrl+V).</li>
+    </ol>
+  </section>
+
+  <form id="settings-form">
+    <section>
+      <h2>Identificação do Salão</h2>
+      <label for="business">Nome do salão <small>(opcional, usado em {salao})</small></label>
+      <input id="business" maxlength="100" autocomplete="off" placeholder="Ex.: O Meu Salão">
+    </section>
+
+    <details class="advanced-section" id="advanced-details">
+      <summary><strong>Opções avançadas</strong> (link de instalação, mensagens permanentes e imagem PNG)</summary>
+      
+      <div class="advanced-content">
+        <div class="advanced-group">
+          <h3>Link de instalação da app</h3>
+          <label for="app-url">Link do salão</label>
+          <input id="app-url" type="url" placeholder="https://zappysoftware.com/s/…" maxlength="2000" autocomplete="off">
+          <p class="hint">Opcional. Se preenchido, ativa a opção de mensagem com link de instalação. Se vazio, essa opção fica oculta no menu do cliente para evitar envios incompletos.</p>
+        </div>
+
+        <div class="advanced-group">
+          <h3>Modelos permanentes de mensagem</h3>
+          <p class="hint">Variáveis disponíveis: <code>{nome}</code>, <code>{primeiroNome}</code>, <code>{salao}</code> e <code>{linkApp}</code>. Pode personalizar os modelos aqui; o texto de cada envio pode sempre ser ajustado na ficha.</p>
+          <div id="templates"></div>
+          <button id="add" type="button" class="secondary">+ Adicionar modelo</button>
+        </div>
+
+        <div class="advanced-group">
+          <h3>Imagem de apoio PNG <small>(opcional)</small></h3>
+          <label for="image-file">Escolher PNG, até 2 MB</label>
+          <input id="image-file" type="file" accept="image/png">
+          <p class="hint">Pode guardar um PNG com instruções da app. O botão “Copiar imagem” na ficha permite colá-la manualmente no WhatsApp após enviar o texto. A imagem <strong>não é anexada automaticamente</strong>.</p>
+          <img id="preview" alt="Pré-visualização da imagem" hidden>
+          <button id="remove-image" type="button" class="secondary" hidden>Remover imagem</button>
+        </div>
+      </div>
+    </details>
+
+    <div class="save">
+      <button type="submit" id="save">Guardar definições</button>
+      <span id="status" role="status" aria-live="polite"></span>
+    </div>
+  </form>
+
+  <p class="foot">Dados guardados apenas neste navegador. Sem servidor, chaves de API ou histórico de clientes.</p>
+</main><script src="settings.js"></script></body></html>

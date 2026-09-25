@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "WhatsApp na ficha — piloto Zappy",
+  "version": "0.1.0",
+  "description": "Prepara mensagens para o cliente da ficha Zappy. O envio é feito manualmente no WhatsApp.",
+  "minimum_chrome_version": "120",
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ],
+  "action": {
+    "default_popup": "settings.html",
+    "default_title": "Definições — WhatsApp na ficha"
+  },
+  "options_page": "settings.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://zappysoftware.com/backoffice/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'"
+  }
+}

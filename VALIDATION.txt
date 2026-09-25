@@ -1,0 +1,11 @@
+Validation — 2026-09-23
+
+Build: passed (esbuild).
+Type checking: passed (tsc --noEmit).
+Automated tests: 14 passed, 0 failed (Node test runner + jsdom).
+
+Coverage: international/national numbers, invalid input, URL/message encoding, missing app link, safe configuration, live input.value reading, primary vs alternative phone, duplicate/hidden fields, stale customer rejection, draft clearing, image/png clipboard payload, settings save and custom message options.
+
+Limits: jsdom simulates layout visibility, dialog behavior, chrome.storage and clipboard APIs. No installed-extension browser test, no live Zappy session, no WhatsApp navigation, no message delivery and no real clipboard paste were performed. The cloud browser refused the local fixture URL under its protocol policy; no workaround was attempted.
+
+The customer dialog ancestor is inferred from the three supplied field selectors. The complete actual container and navigation lifecycle remain unverified. Initial installation is a pilot on one workstation.
