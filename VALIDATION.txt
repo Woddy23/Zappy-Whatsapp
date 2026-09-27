@@ -1,11 +1,66 @@
-Validation — 2026-09-23
+Validation — 2026-09-26
 
-Build: passed (esbuild).
-Type checking: passed (tsc --noEmit).
-Automated tests: 14 passed, 0 failed (Node test runner + jsdom).
+Scope: current local source and rebuilt extension/; no release or commit.
 
-Coverage: international/national numbers, invalid input, URL/message encoding, missing app link, safe configuration, live input.value reading, primary vs alternative phone, duplicate/hidden fields, stale customer rejection, draft clearing, image/png clipboard payload, settings save and custom message options.
+npm run build: passed.
+npm run check: passed.
+npm test: 40 passed, 0 failed.
+git diff --check and staged diff check: passed.
 
-Limits: jsdom simulates layout visibility, dialog behavior, chrome.storage and clipboard APIs. No installed-extension browser test, no live Zappy session, no WhatsApp navigation, no message delivery and no real clipboard paste were performed. The cloud browser refused the local fixture URL under its protocol policy; no workaround was attempted.
+Regression coverage:
+- phone normalization, message encoding and strict configuration validation;
+- clean stock greetings, exact old-template repair, valid Unicode/emoji URL round trips;
+- U+FFFD and unpaired surrogate detection, without discarding custom text;
+- placement after visible citizen-card button in same action group, fallback/replacement;
+- version-1 migration preserving templates/deletions and explicit image associations;
+- shared image storage, PNG signature/size validation and total storage budget;
+- harmless panel updates preserve drafts; identity changes block stale navigation;
+- loading recovery, failed configuration-read retry and settings-change invalidation;
+- exact one-off text, per-message image controls and clipboard failure fallback;
+- reordered Chrome storage keys and delayed events do not cause false conflicts;
+- compare-and-write serialized across settings tabs; repeated reloads cannot overlap;
+- field errors select/focus affected editor, undo restores message/image/order;
+- switching selected message preserves drafts and isolated image previews;
+- failed writes and invalid replacement images preserve prior data;
+- toolbar/options messaging success and failure handling.
 
-The customer dialog ancestor is inferred from the three supplied field selectors. The complete actual container and navigation lifecycle remain unverified. Initial installation is a pilot on one workstation.
+Real browser check: tests/browser-check.mjs passed.
+Isolated headless Brave, Chromium 153.0.8010.53, loading extension/ unpacked.
+Synthetic Zappy page intercepted at https://zappysoftware.com/backoffice/ui-check.
+WhatsApp links intercepted and inspected; never navigated to real conversations.
+
+Confirmed in real browser:
+- compact titled choices and correct recipient display;
+- WhatsApp SVG button after Ler C. Cidadão, same vertical alignment;
+- differentiated text/link/image rows with preview and green hover highlight;
+- clean app greeting and exact accent/emoji text in intercepted outgoing URLs;
+- exact rendered/edited WhatsApp URL text;
+- unrelated DOM updates preserve draft;
+- trigger second-click closes, Enter opens, Escape restores focus, outside click closes;
+- Configurar mensagens opens actual extension options through background messaging;
+- toolbar manifest uses dedicated options action (actual toolbar UI click not automated);
+- real PNG upload/decoding, successful clipboard image write and downloaded PNG;
+- consecutive saves, simultaneous-tab conflict protection, undo and deletion persistence;
+- salon name and app link always displayed above message editor;
+- single message selector, variable insertion control and live text/image preview;
+- inline error focus, 15px body/control typography, 320px/375px layouts;
+- 200% browser zoom without horizontal overflow;
+- image panel remains within narrow viewport;
+- changed recipient blocks old draft and explicit refresh uses new number;
+- no page JavaScript errors.
+
+Browser screenshots/profile for this run:
+C:\Users\rafae\AppData\Local\Temp\opencode\zappy-check-0cNR7k
+
+Prior fixes retained: settings navigation through runtime.openOptionsPage and
+identity-based invalidation instead of invalidating on any customer-panel mutation.
+
+Limits: no access to live Zappy customer layout/session. User must reload extension
+and refresh Zappy in their normal profile. Actual WhatsApp Web/Desktop routing,
+sender session and final manual image paste in WhatsApp remain unverified.
+Clipboard write was checked, not a paste into the real WhatsApp composer.
+The original source of the user's replacement character was not observable.
+Source and compiled defaults previously contained valid U+1F60A; isolated URL
+encoding preserved it. Known stock copies are now repaired to a plain greeting;
+custom corrupt characters are flagged, never guessed or silently discarded.
+No message sent; no Zappy record changed; no personal browser profile used.

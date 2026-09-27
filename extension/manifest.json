@@ -9,10 +9,12 @@
     "clipboardWrite"
   ],
   "action": {
-    "default_popup": "settings.html",
-    "default_title": "Definições — WhatsApp na ficha"
+    "default_title": "Configurar mensagens — WhatsApp na ficha"
   },
   "options_page": "settings.html",
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": [

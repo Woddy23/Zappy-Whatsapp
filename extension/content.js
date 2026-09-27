@@ -2327,54 +2327,47 @@
   }
 
   // src/core.ts
+  var MAX_CONFIG_BYTES = 9 * 1024 * 1024;
+  var MAX_IMAGE_BYTES = 2 * 1024 * 1024;
   var STORAGE_KEY = "zappyWhatsAppConfig";
   var DEFAULT_LINK_FREE_APP_TEMPLATE = {
     id: "app_login",
     label: "Como entrar na app",
-    text: "Ol\xE1, {primeiroNome}! \u{1F60A}\n\nSe j\xE1 instalou a nossa app, basta abri-la e entrar com o seu n\xFAmero de telem\xF3vel registado connosco. Receber\xE1 um c\xF3digo por SMS para validar o acesso.\n\nSe precisar de ajuda, responda a esta mensagem."
+    text: "Ol\xE1, {primeiroNome}!\n\nSe j\xE1 instalou a nossa app, basta abri-la e entrar com o seu n\xFAmero de telem\xF3vel registado connosco. Receber\xE1 um c\xF3digo por SMS para validar o acesso.\n\nSe precisar de ajuda, responda a esta mensagem."
   };
   var defaults = {
-    version: 1,
+    version: 2,
     business: "",
     appUrl: "",
-    image: "",
+    images: {},
     templates: [
       { id: "contact", label: "Contactar cliente", text: "Ol\xE1, {primeiroNome}!" },
-      { id: "app", label: "Enviar link da app", text: "Ol\xE1, {primeiroNome}! \u{1F60A}\n\nPode aceder \xE0 nossa app aqui: {linkApp}\n\n1. Abra o link e siga as instru\xE7\xF5es de instala\xE7\xE3o.\n2. Entre com o n\xFAmero de telem\xF3vel registado connosco.\n3. Introduza o c\xF3digo recebido por SMS.\n\nSe precisar de ajuda, responda a esta mensagem." },
+      { id: "app", label: "Enviar link da app", text: "Ol\xE1, {primeiroNome}!\n\nPode aceder \xE0 nossa app aqui: {linkApp}\n\n1. Abra o link e siga as instru\xE7\xF5es de instala\xE7\xE3o.\n2. Entre com o n\xFAmero de telem\xF3vel registado connosco.\n3. Introduza o c\xF3digo recebido por SMS.\n\nSe precisar de ajuda, responda a esta mensagem." },
       DEFAULT_LINK_FREE_APP_TEMPLATE
     ]
   };
   function migrateConfig(saved) {
-    if (!saved || typeof saved !== "object") return structuredClone(defaults);
+    if (saved === void 0) return structuredClone(defaults);
+    if (!saved || typeof saved !== "object") throw new Error("Configura\xE7\xE3o inv\xE1lida.");
     const raw = saved;
-    const base = {
-      version: 1,
-      business: typeof raw.business === "string" ? raw.business : "",
-      appUrl: typeof raw.appUrl === "string" ? raw.appUrl : "",
-      image: typeof raw.image === "string" ? raw.image : "",
-      templates: Array.isArray(raw.templates) ? raw.templates.filter(Boolean).map((t) => ({ id: String(t.id || ""), label: String(t.label || ""), text: String(t.text || "") })) : []
-    };
-    if (base.templates.length === 0) {
-      base.templates = structuredClone(defaults.templates);
-    } else {
-      const hasLinkFree = base.templates.some((t) => t.id === "app_login" || !t.text.includes("{linkApp}") && t.label.toLowerCase().includes("entrar na app"));
-      if (!hasLinkFree && base.templates.length < 8) {
-        const appIndex = base.templates.findIndex((t) => t.id === "app");
-        const newTemplate = structuredClone(DEFAULT_LINK_FREE_APP_TEMPLATE);
-        let uniqueId = newTemplate.id;
-        let counter = 1;
-        while (base.templates.some((t) => t.id === uniqueId)) {
-          uniqueId = `${newTemplate.id}_${counter++}`;
-        }
-        newTemplate.id = uniqueId;
-        if (appIndex >= 0) {
-          base.templates.splice(appIndex + 1, 0, newTemplate);
-        } else {
-          base.templates.push(newTemplate);
-        }
-      }
-    }
-    return validateConfig(base);
+    if (raw.version === 2) return validateConfig(raw);
+    if (raw.version !== 1) throw new Error("Vers\xE3o de configura\xE7\xE3o n\xE3o suportada.");
+    const image = validateImage(raw.image);
+    if (!Array.isArray(raw.templates)) throw new Error("Configura\xE7\xE3o inv\xE1lida.");
+    return validateConfig({ ...raw, version: 2, images: image ? { legacy: image } : {}, templates: raw.templates.map((t) => {
+      if (!t || typeof t.id !== "string" || typeof t.label !== "string") throw new Error("Configura\xE7\xE3o inv\xE1lida.");
+      return { id: t.id, label: t.label, text: t.text, ...image && (t.id.startsWith("app") || /app/i.test(t.label)) ? { image: "legacy" } : {} };
+    }) });
+  }
+  function validateImage(value) {
+    if (typeof value !== "string") throw new Error("A imagem deve ser PNG, at\xE9 2 MB.");
+    if (!value) return "";
+    const prefix = "data:image/png;base64,";
+    const encoded = value.slice(prefix.length);
+    if (!value.startsWith(prefix) || encoded.length > Math.ceil(MAX_IMAGE_BYTES / 3) * 4 || encoded.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new Error("A imagem deve ser PNG, at\xE9 2 MB.");
+    const bytes = atob(encoded);
+    if (bytes.length > MAX_IMAGE_BYTES || !bytes.startsWith("\x89PNG\r\n\n")) throw new Error("A imagem deve ser PNG, at\xE9 2 MB.");
+    return value;
   }
   function normalisePhone(raw, country) {
     const cleaned = raw.trim();
@@ -2404,26 +2397,42 @@
   function validateConfig(value) {
     if (!value || typeof value !== "object") throw new Error("Configura\xE7\xE3o inv\xE1lida. Abra as defini\xE7\xF5es e guarde novamente.");
     const c = value;
-    if (c.version !== 1 || typeof c.business !== "string" || c.business.length > 100 || typeof c.appUrl !== "string" || typeof c.image !== "string" || !Array.isArray(c.templates) || c.templates.length < 1 || c.templates.length > 8) throw new Error("Configura\xE7\xE3o inv\xE1lida.");
+    if (c.version !== 2 || typeof c.business !== "string" || c.business.length > 100 || typeof c.appUrl !== "string" || !c.images || typeof c.images !== "object" || Array.isArray(c.images) || !Array.isArray(c.templates) || c.templates.length < 1 || c.templates.length > 8) throw new Error("Configura\xE7\xE3o inv\xE1lida.");
     const ids = /* @__PURE__ */ new Set();
+    const images = /* @__PURE__ */ Object.create(null);
     for (const t of c.templates) {
-      if (!t || typeof t.id !== "string" || ids.has(t.id) || typeof t.label !== "string" || !t.label.trim() || t.label.length > 60 || typeof t.text !== "string" || !t.text.trim() || t.text.length > 3e3) throw new Error("Preencha o t\xEDtulo e a mensagem de cada op\xE7\xE3o (at\xE9 3000 caracteres).");
+      if (!t || typeof t.id !== "string" || !t.id || t.id.length > 100 || ids.has(t.id) || typeof t.label !== "string" || !t.label.trim() || t.label.length > 60 || typeof t.text !== "string" || !t.text.trim() || t.text.length > 3e3) throw new Error("Preencha o t\xEDtulo e a mensagem de cada op\xE7\xE3o (at\xE9 3000 caracteres).");
       ids.add(t.id);
+      if (t.image !== void 0) {
+        if (typeof t.image !== "string" || !Object.hasOwn(c.images, t.image) || !c.images[t.image]) throw new Error("A imagem de uma mensagem n\xE3o foi encontrada. Escolha novamente a imagem.");
+        if (!Object.hasOwn(images, t.image)) images[t.image] = validateImage(c.images[t.image]);
+      }
       for (const match of t.text.matchAll(/\{([^{}]+)\}/g)) if (!["nome", "primeiroNome", "salao", "linkApp"].includes(match[1])) throw new Error(`Vari\xE1vel desconhecida: ${match[0]}`);
     }
-    if (c.image && (!/^data:image\/png;base64,iVBORw0KGgo/.test(c.image) || c.image.length > 28e5)) throw new Error("A imagem deve ser PNG, at\xE9 2 MB.");
-    return { version: 1, business: c.business.trim(), appUrl: validateUrl(c.appUrl), templates: c.templates.map((t) => ({ id: t.id, label: t.label.trim(), text: t.text })), image: c.image };
+    const result2 = { version: 2, business: c.business.trim(), appUrl: validateUrl(c.appUrl), templates: c.templates.map((t) => {
+      const clean = t.text.replace(/^Olá, \{primeiroNome\}! (?:\u{1f60a}|\ufffd{1,2}|[\ud800-\udfff])(?=\r?\n\r?\n)/u, "Ol\xE1, {primeiroNome}!");
+      const stock = defaults.templates.find((stock2) => stock2.id === t.id);
+      return { id: t.id, label: t.label, text: clean === stock?.text ? clean : t.text, ...t.image ? { image: t.image } : {} };
+    }), images: { ...images } };
+    if (new TextEncoder().encode(JSON.stringify(result2)).byteLength > MAX_CONFIG_BYTES) throw new Error("As defini\xE7\xF5es ultrapassam 9 MB. Remova ou reduza imagens.");
+    return result2;
+  }
+  function validateMessageText(text) {
+    if (/[\ufffd\ud800-\udfff]/u.test(text)) throw new Error("A mensagem cont\xE9m um car\xE1ter inv\xE1lido (\uFFFD). Apague-o e escreva-o novamente.");
   }
   function renderMessage(template, name, config) {
     const vars = { nome: name, primeiroNome: name.trim().split(/\s+/)[0], salao: config.business, linkApp: config.appUrl };
-    return template.replace(/\{([^{}]+)\}/g, (_all, key) => {
+    const message = template.replace(/\{([^{}]+)\}/g, (_all, key) => {
       if (!(key in vars)) throw new Error(`Vari\xE1vel desconhecida: {${key}}`);
       if (!vars[key]) throw new Error(key === "linkApp" ? "Adicione o link de instala\xE7\xE3o da app nas defini\xE7\xF5es da extens\xE3o, ou remova {linkApp} do texto da mensagem." : `Preencha o campo necess\xE1rio: ${key}.`);
       return vars[key];
     });
+    validateMessageText(message);
+    return message;
   }
   function makeWhatsAppUrl(phone, message) {
     if (!/^\+[1-9]\d{6,14}$/.test(phone)) throw new Error("N\xFAmero inv\xE1lido.");
+    validateMessageText(message);
     if (!message.trim() || message.length > 4e3) throw new Error("A mensagem deve ter entre 1 e 4000 caracteres.");
     return `https://wa.me/${phone.slice(1)}?text=${encodeURIComponent(message)}`;
   }
@@ -2461,253 +2470,368 @@
   }
 
   // src/content.ts
-  var existing = document.querySelector("[data-zappy-whatsapp-helper]");
-  if (!existing) start();
+  var whatsappIcon = `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>`;
+  var lineIcon = (path, className = "") => `<svg class="${className}" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${path}</svg>`;
+  var chevron = lineIcon('<path d="m9 5 7 7-7 7"/>', "chevron");
+  if (!document.querySelector("[data-zappy-whatsapp-helper]")) start();
   function start() {
     let config = structuredClone(defaults);
-    let configReady = false;
-    let configError = "";
-    let current = null;
-    let snapshot = null;
-    let changedAt = Date.now();
-    let lastError = "";
-    let stale = false;
+    let configReady = false, configError = "", lastError = "";
+    let current = null, snapshot = null;
+    let changedAt = Date.now(), configLoad = 0;
+    let expanded = false, waiting = false, stale = false;
+    let selected = null;
     const host = document.createElement("span");
     host.dataset.zappyWhatsappHelper = "0.1.0";
-    host.style.cssText = "display:inline-block;float:left;margin:12px 6px 0 0;";
+    host.style.cssText = "display:inline-block;float:left;clear:none;margin:12px 0 0 8px;vertical-align:top;";
     const shadow = host.attachShadow({ mode: "open" });
     shadow.innerHTML = `<style>
-    :host{font:14px Arial,sans-serif;color:#213b32}*{box-sizing:border-box}
-    button,select,textarea{font:inherit}button,a{touch-action:manipulation}
-    button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}
-    #trigger{background:#17754f;color:white;border:0;border-radius:3px;padding:6px 13px;font-size:12px;font-weight:700;min-height:27px}
-    dialog{color:#233a32;background:#fff;border:1px solid #d7e4dc;border-radius:14px;padding:24px;width:460px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto;box-shadow:0 16px 64px #0004;font:14px/1.5 Arial,sans-serif}
-    dialog::backdrop{background:#0e211d66}h2{font-size:21px;line-height:1.2;margin:0}header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    #close{background:none;border:0;padding:6px;font-size:23px;color:#456257}.muted{color:#5b7067;font-size:12px}#recipient{white-space:pre-line;background:#eff6f1;border:1px solid #cbded1;border-radius:8px;padding:12px;margin:18px 0 14px;font-weight:600}#recipient-label{font-size:12px;color:#456257;margin:0 0 -12px}
-    label{display:block;font-weight:600;margin:12px 0 5px}select,textarea{width:100%;padding:10px;border:1px solid #9cb5a8;border-radius:6px;background:#fff;color:#20372d}textarea{height:188px;min-height:120px;resize:vertical;line-height:1.5;font-size:15px}
-    #status{font-size:13px;color:#87400c;background:#fff6eb;border-left:3px solid #b85c18;padding:7px 9px;margin:10px 0;min-height:20px}#status:empty{display:none}footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
-    #open{border:0;border-radius:7px;background:#17754f;color:white;font-weight:700;padding:11px 16px}#settings{color:#235e45;font-size:13px}
-    #media{margin-top:14px;border-top:1px solid #dfebe3;padding-top:12px}#image{width:58px;height:58px;object-fit:contain;vertical-align:middle;margin-right:8px;border:1px solid #ddd;border-radius:4px}
-    #copy{border:1px solid #9cb5a8;background:#f4f8f5;border-radius:6px;padding:8px;color:#214633}.note{margin:10px 0 0;font-size:12px;color:#5b7067}
-    :focus-visible{outline:3px solid #276de0;outline-offset:3px}[hidden]{display:none!important}
+    :host{font:14px/1.5 system-ui,sans-serif;color:#20372d}*{box-sizing:border-box}
+    button,textarea{font:inherit}button,a{touch-action:manipulation}button{cursor:pointer;color:inherit}
+    button:disabled{cursor:not-allowed;opacity:.55}button{border:0;background:none;border-radius:6px}svg{flex-shrink:0;vertical-align:middle}
+    #trigger{display:inline-flex;align-items:center;gap:7px;background:#157d48;border:1px solid #116b3d;color:#fff;border-radius:5px;padding:0 10px;height:30px;white-space:nowrap;font-size:12px;font-weight:650;line-height:1}
+    #trigger .chevron{width:12px;height:12px;transform:rotate(90deg);margin-left:3px}#trigger[aria-expanded=true] .chevron{transform:rotate(-90deg)}#trigger:hover,#trigger[aria-expanded=true]{background:#106437;border-color:#0d572f}
+    #panel{position:fixed;inset:auto;margin:0;color:#20372d;background:#fff;border:1px solid #d7e2dc;border-radius:12px;padding:16px;width:360px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto;overscroll-behavior:contain;box-shadow:0 10px 32px #142e2329;font:14px/1.5 system-ui,sans-serif;color-scheme:light}
+    header{display:flex;align-items:center;justify-content:space-between;gap:8px}h2{display:flex;gap:8px;align-items:center;font-size:15px;margin:0;color:#176b46}#close{display:grid;place-items:center;width:28px;height:28px;color:#617469}
+    #recipient{white-space:pre-line;font-size:13px;font-weight:600;margin:12px 0 0;padding-bottom:12px;border-bottom:1px solid #e5ece7;overflow-wrap:anywhere;line-height:1.65}.note{font-size:12px;color:#617469;margin:8px 0 12px}
+    #choices{display:grid;gap:5px;margin:10px 0 12px}.choice-row{min-width:0}.choice{display:flex;align-items:center;gap:11px;width:100%;min-height:60px;text-align:left;padding:10px;border:1px solid #e1e8e3;border-radius:8px;background:#fff;overflow-wrap:anywhere}.choice-icon{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;color:#397658;background:#f0f5f2;border-radius:7px}.choice-content{display:block;min-width:0;flex:1}.choice-title{display:block;font-size:13px;font-weight:600;line-height:1.4}.choice-preview{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;font-weight:400;color:#63756a;margin-top:3px}.choice .chevron{width:14px;height:14px;color:#809086}.choice:disabled{opacity:1;color:#748078;background:#fafbf9;border-color:#e8ede9}.choice:disabled .choice-icon{color:#748078;background:#f0f2ef}.choice:disabled .chevron{display:none}.choice-note{font-size:12px;color:#63756a;margin:4px 10px 6px;overflow-wrap:anywhere}.choice:not(:disabled):is(:hover,:focus-visible){background:#edf7f0;border-color:#76ad8b;box-shadow:inset 3px 0 #17754f}.choice:not(:disabled):is(:hover,:focus-visible) .choice-icon{background:#d9efdf;color:#14653d}.choice:not(:disabled):is(:hover,:focus-visible) .chevron{color:#17754f}.choice:active:not(:disabled){background:#e1f1e7}
+    #custom,#settings,#back{display:flex;align-items:center;gap:9px;padding:9px 8px;text-align:left;color:#176b46}#custom{width:100%;border:1px dashed #bfd1c5;border-radius:7px;font-size:13px}#settings{font-size:12px}#back{margin:4px 0;font-size:13px}#custom:hover:not(:disabled),#back:hover,#settings:hover,#close:hover{background:#eff6f1}#open:hover:not(:disabled){background:#125f40}
+    #status{color:#456257;background:#f1f5f3;border-left:3px solid #9cb5a8;padding:8px 10px;font-size:13px;margin:10px 0;overflow-wrap:anywhere}#status[data-kind=error]{color:#9f351d;background:#fff4f0;border-color:#ba4b2b}#status[data-kind=success]{color:#176b46;background:#eff6f1;border-color:#17754f}#status:empty{display:none}
+    #retry,#copy{background:#eff6f1;border:1px solid #b5cabe;padding:9px 12px}label{display:block;font-weight:600;margin:8px 0 5px}textarea{width:100%;height:145px;min-height:90px;resize:vertical;padding:10px;border:1px solid #9cb5a8;border-radius:6px;color:#20372d;background:#fff;line-height:1.5;font-size:15px}
+    #media{margin:12px 0;border-top:1px solid #e3e9e5;padding-top:12px}#image{display:block;max-width:100%;object-fit:contain;object-position:left center;margin-bottom:10px}#download{display:inline-block;font-size:13px;color:#176b46;padding:9px}#download:hover{text-decoration-thickness:2px}
+    #open{background:#17754f;color:#fff;padding:11px 14px;font-weight:600;width:100%;margin:8px 0}footer{border-top:1px solid #e3e9e5;margin-top:14px;padding-top:7px}footer .note{margin:4px 8px 0;font-size:11px}
+    :focus-visible{outline:2px solid #17754f;outline-offset:2px}#panel:focus{outline:none}#trigger:focus-visible{outline-color:#125f40}[hidden]{display:none!important}
   </style>
-  <button id="trigger" type="button" aria-haspopup="dialog">WhatsApp \u25BE</button>
-  <dialog aria-labelledby="title">
-    <header><h2 id="title">Mensagem por WhatsApp</h2><button id="close" type="button" aria-label="Fechar">\xD7</button></header>
-    <p id="recipient-label">Destinat\xE1rio \u2014 confirme antes de abrir o WhatsApp</p><div id="recipient" aria-live="polite"></div>
-    <label for="template">Escolher mensagem</label><select id="template"></select>
-    <label for="message">Mensagem</label><textarea id="message" maxlength="4000" spellcheck="true"></textarea>
+  <button id="trigger" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="panel">${whatsappIcon}<span>WhatsApp</span>${chevron}</button>
+  <div id="panel" popover="auto" role="dialog" aria-labelledby="title" aria-describedby="recipient" tabindex="-1">
+    <header><h2 id="title">${whatsappIcon}WhatsApp</h2><button id="close" type="button" aria-label="Fechar op\xE7\xF5es">${lineIcon('<path d="m6 6 12 12M18 6 6 18"/>')}</button></header>
+    <div id="recipient" aria-live="polite"></div>
     <div id="status" role="status" aria-live="polite"></div>
-    <section id="media" hidden><img id="image" alt="Imagem configurada"><button id="copy" type="button">Copiar imagem</button><p class="note">Depois de enviar o texto, cole a imagem no WhatsApp (Ctrl+V) e envie. Se n\xE3o funcionar, anexe o ficheiro guardado.</p></section>
-    <footer><a id="settings" target="_blank" rel="noopener noreferrer">Defini\xE7\xF5es</a><button id="open" type="button">Abrir WhatsApp</button></footer>
-    <p class="note">Confirme o destinat\xE1rio e a conta do sal\xE3o. O envio \xE9 manual. Se WhatsApp n\xE3o abrir, permita novas janelas para este site.</p>
-  </dialog>`;
+    <button id="retry" type="button" hidden>Atualizar destinat\xE1rio</button>
+    <div id="menu"><p class="note">Escolha a mensagem para este cliente.</p><div id="choices"></div><button id="custom" type="button" disabled>${lineIcon('<path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z"/>')}<span>Escrever mensagem\u2026</span></button></div>
+    <section id="editor" hidden>
+      <button id="back" type="button">Voltar \xE0s mensagens</button>
+      <label id="message-label" for="message">Mensagem</label><textarea id="message" name="message" autocomplete="off" maxlength="4000" spellcheck="true" disabled></textarea>
+      <section id="media" hidden><img id="image" width="160" height="110" alt="Imagem desta mensagem"><button id="copy" type="button" disabled>Copiar imagem</button><a id="download" download="mensagem.png">Guardar imagem</a><p class="note">Envie o texto e cole a imagem com Ctrl+V no WhatsApp. O link n\xE3o anexa imagens.</p></section>
+      <button id="open" type="button" disabled>Abrir WhatsApp</button>
+    </section>
+    <footer><button id="settings" type="button">${lineIcon('<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="white"/><circle cx="15" cy="17" r="2" fill="white"/>')}<span>Configurar mensagens</span></button><p class="note">Reveja e envie pela conta iniciada no WhatsApp.</p></footer>
+  </div>`;
     const el = (id) => shadow.getElementById(id);
-    const trigger = el("trigger");
-    const dialog = shadow.querySelector("dialog");
-    const select = el("template");
-    const message = el("message");
-    const open = el("open");
-    const copy = el("copy");
-    const status = el("status");
-    el("settings").href = chrome.runtime.getURL("settings.html");
+    const trigger = el("trigger"), panel = el("panel");
+    const message = el("message"), open = el("open");
+    const copy = el("copy"), custom = el("custom");
+    const choices = el("choices"), status = el("status");
+    trigger.popoverTargetElement = panel;
+    trigger.popoverTargetAction = "toggle";
+    function notify(text, kind = "info") {
+      status.textContent = text;
+      status.dataset.kind = kind;
+    }
+    function position() {
+      if (!expanded) return;
+      const anchor = trigger.getBoundingClientRect();
+      const height = panel.offsetHeight, width = panel.offsetWidth;
+      panel.style.left = `${Math.max(8, Math.min(anchor.left, innerWidth - width - 8))}px`;
+      const below = anchor.bottom + 6;
+      panel.style.top = `${Math.max(8, Math.min(below + height <= innerHeight - 8 ? below : anchor.top - height - 6, innerHeight - height - 8))}px`;
+    }
     function clearDraft(reason = "") {
       snapshot = null;
+      selected = null;
       message.value = "";
-      el("recipient").textContent = "";
+      message.disabled = true;
       open.disabled = true;
       copy.disabled = true;
-      select.disabled = true;
-      message.disabled = true;
-      status.textContent = reason;
+      custom.disabled = true;
+      el("recipient").textContent = "";
+      el("editor").hidden = true;
+      el("menu").hidden = false;
+      el("media").hidden = true;
+      el("image").removeAttribute("src");
+      el("download").removeAttribute("href");
+      choices.replaceChildren();
+      notify(reason, reason ? "error" : "info");
+    }
+    function close(returnFocus = false) {
+      if (expanded) panel.hidePopover();
+      if (returnFocus) trigger.focus();
     }
     function invalidate(reason) {
-      if (dialog.open) {
-        stale = true;
-        clearDraft(reason);
-      }
+      if (!expanded || !snapshot) return;
+      const hadFocus = !!shadow.activeElement && panel.contains(shadow.activeElement);
+      stale = true;
+      waiting = false;
+      clearDraft(reason);
+      el("retry").hidden = false;
+      position();
+      if (hadFocus) el("retry").focus();
     }
     function sync() {
       if (document.hidden) return;
       const anchors = Array.from(document.querySelectorAll("#sendAppInviteBtn")).filter(visible);
       if (anchors.length !== 1) {
-        if (dialog.open) dialog.close();
+        close();
         host.remove();
         current = null;
         changedAt = Date.now();
         return;
       }
-      if (host.previousElementSibling !== anchors[0]) anchors[0].after(host);
+      const citizenButtons = Array.from(anchors[0].parentElement.children).filter((node) => node.id === "client_get_from_govid" && visible(node));
+      const placement = citizenButtons.length === 1 ? citizenButtons[0] : anchors[0];
+      if (host.previousElementSibling !== placement) placement.after(host);
       try {
         const next = readCustomer();
         if (!sameCustomer(current, next)) {
           changedAt = Date.now();
-          invalidate("A ficha foi alterada. Feche esta janela e volte a abrir o WhatsApp do cliente.");
+          invalidate("A ficha mudou. Confirme o destinat\xE1rio antes de escolher outra mensagem.");
         }
         current = next;
         lastError = "";
       } catch (error) {
         lastError = error.message;
-        if (current) invalidate(lastError);
+        invalidate(lastError);
         current = null;
         changedAt = Date.now();
       }
-      trigger.title = lastError || "Preparar uma mensagem para o cliente desta ficha";
+      trigger.title = lastError || "Escolher uma mensagem para este cliente";
+      if (expanded && waiting) prepare();
     }
     function checkRecipient() {
-      const latest = readCustomer();
-      if (stale || !snapshot || !sameCustomer(snapshot, latest)) {
-        invalidate("A ficha foi alterada. Feche esta janela e volte a abrir o WhatsApp do cliente.");
-        throw new Error("A ficha foi alterada. Volte a abrir esta janela.");
-      }
-      return latest;
-    }
-    function isAppMessage(template) {
-      if (!template) return false;
-      return template.id === "app" || template.id === "app_login" || template.id.startsWith("app") || /app/i.test(template.label);
-    }
-    function isAvailableTemplate(template) {
-      if (template.text.includes("{linkApp}") && !config.appUrl) return false;
-      return true;
-    }
-    function updateMedia(selectedTemplate) {
-      const showImage = Boolean(config.image && isAppMessage(selectedTemplate));
-      el("media").hidden = !showImage;
-      copy.disabled = !showImage;
-    }
-    function setTemplate() {
-      if (!snapshot || stale) return;
       try {
-        checkRecipient();
-        const template = config.templates.find((t) => t.id === select.value);
-        if (!template) throw new Error("Escolha uma mensagem.");
-        message.value = renderMessage(template.text, snapshot.name, config);
-        message.disabled = false;
-        status.textContent = "";
-        open.disabled = !message.value.trim();
-        updateMedia(template);
+        const latest = readCustomer();
+        if (stale || !snapshot || !sameCustomer(snapshot, latest)) throw new Error("A ficha mudou. Atualize o destinat\xE1rio e escolha novamente.");
+        return latest;
       } catch (error) {
-        message.value = "";
-        message.disabled = true;
-        open.disabled = true;
-        el("media").hidden = true;
-        copy.disabled = true;
-        status.textContent = error.message;
+        invalidate(error.message);
+        throw error;
       }
     }
-    trigger.addEventListener("click", () => {
-      sync();
+    function prepare() {
+      if (!configReady) {
+        notify("A carregar as defini\xE7\xF5es\u2026");
+        return;
+      }
+      if (configError) {
+        notify(configError, "error");
+        return;
+      }
+      if (!current) {
+        notify(lastError || "A carregar a ficha\u2026", lastError ? "error" : "info");
+        return;
+      }
+      if (Date.now() - changedAt < 700) {
+        notify("A carregar a ficha\u2026");
+        return;
+      }
+      snapshot = current;
+      waiting = false;
       stale = false;
-      clearDraft();
-      select.replaceChildren();
-      const availableTemplates = config.templates.filter(isAvailableTemplate);
-      for (const t of availableTemplates) select.add(new Option(t.label, t.id));
-      const initialTemplate = availableTemplates[0];
-      updateMedia(initialTemplate);
-      el("image").src = config.image || "";
-      try {
-        if (!configReady) throw new Error("A carregar as defini\xE7\xF5es. Tente novamente.");
-        if (configError) throw new Error(configError);
-        if (availableTemplates.length === 0) throw new Error("N\xE3o h\xE1 mensagens dispon\xEDveis. Configure o link nas defini\xE7\xF5es.");
-        if (!current) throw new Error(lastError || "N\xE3o foi poss\xEDvel ler a ficha.");
-        if (Date.now() - changedAt < 700) throw new Error("A ficha est\xE1 a atualizar. Feche esta janela e tente novamente dentro de um segundo.");
-        snapshot = readCustomer();
-        el("recipient").textContent = `${snapshot.name}
-${snapshot.phone}${config.business ? `
-Sal\xE3o: ${config.business}` : ""}`;
-        select.disabled = false;
-        copy.disabled = false;
-        setTemplate();
-      } catch (error) {
-        clearDraft(error.message);
+      el("recipient").textContent = `${snapshot.name}
+${snapshot.phone}`;
+      notify("");
+      custom.disabled = false;
+      choices.replaceChildren();
+      for (const template of config.templates) {
+        const row = document.createElement("div");
+        row.className = "choice-row";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "choice";
+        button.dataset.template = template.id;
+        button.setAttribute("aria-label", template.label);
+        const kind = template.image ? '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/>' : template.text.includes("{linkApp}") ? '<path d="m10 13 4-4M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0M16 8l1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(1 0) scale(.92)"/>' : '<path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 3v-3H3V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10M7 13h6"/>';
+        button.innerHTML = `<span class="choice-icon">${lineIcon(kind)}</span><span class="choice-content"><span class="choice-title"></span><span class="choice-preview" aria-hidden="true"></span></span>${chevron}`;
+        button.querySelector(".choice-title").textContent = template.label;
+        row.append(button);
+        let hint = template.image ? "Com imagem" : "";
+        try {
+          const text = renderMessage(template.text, snapshot.name, config);
+          makeWhatsAppUrl(snapshot.phone, text);
+          button.querySelector(".choice-preview").textContent = `${template.image ? "Com imagem \xB7 " : ""}${text.replace(/\s+/g, " ").trim()}`;
+        } catch (error) {
+          button.disabled = true;
+          hint = template.text.includes("{linkApp}") && !config.appUrl ? "Configure o link da app." : template.text.includes("{salao}") && !config.business ? "Configure o nome do sal\xE3o." : error.message;
+          button.querySelector(".choice-preview").textContent = "Indispon\xEDvel";
+        }
+        if (hint) {
+          const note = document.createElement("p");
+          note.className = "choice-note";
+          note.hidden = !button.disabled;
+          note.id = `choice-note-${choices.children.length}`;
+          note.textContent = hint;
+          row.append(note);
+          button.setAttribute("aria-describedby", note.id);
+        }
+        button.addEventListener("click", () => {
+          try {
+            const recipient = checkRecipient();
+            if (template.image) edit(template);
+            else launch(renderMessage(template.text, recipient.name, config));
+          } catch (error) {
+            notify(error.message, "error");
+          }
+        });
+        choices.append(row);
       }
-      dialog.showModal();
+      position();
+    }
+    function begin() {
+      stale = false;
+      waiting = true;
+      clearDraft();
+      el("retry").hidden = true;
+      if (configError && configReady) void loadConfig();
+      sync();
+    }
+    function edit(template) {
+      const recipient = checkRecipient();
+      selected = template;
+      el("menu").hidden = true;
+      el("editor").hidden = false;
+      el("message-label").textContent = template?.label || "Escrever mensagem";
+      message.value = template ? renderMessage(template.text, recipient.name, config) : "";
+      message.disabled = false;
+      open.disabled = !message.value.trim();
+      notify("");
+      const image = template?.image ? config.images[template.image] : "";
+      el("media").hidden = !image;
+      copy.disabled = !image;
+      if (image) {
+        el("image").src = image;
+        el("download").href = image;
+      }
+      position();
+      message.focus();
+    }
+    function launch(text) {
+      const recipient = checkRecipient();
+      const link = document.createElement("a");
+      link.href = makeWhatsAppUrl(recipient.phone, text);
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      shadow.append(link);
+      link.click();
+      link.remove();
+      notify("Reveja e envie no WhatsApp. Se n\xE3o abriu, permita novas janelas neste site.");
+      position();
+    }
+    panel.addEventListener("beforetoggle", (event) => {
+      expanded = event.newState === "open";
+      trigger.setAttribute("aria-expanded", String(expanded));
+      if (expanded) begin();
+      else {
+        waiting = false;
+        stale = false;
+        clearDraft();
+      }
     });
-    select.addEventListener("change", setTemplate);
+    panel.addEventListener("toggle", () => {
+      position();
+      if (expanded && (!shadow.activeElement || shadow.activeElement === trigger)) panel.focus({ preventScroll: true });
+    });
+    el("close").addEventListener("click", () => close(true));
+    shadow.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && expanded) {
+        event.preventDefault();
+        close(true);
+      }
+    });
+    el("retry").addEventListener("click", begin);
+    custom.addEventListener("click", () => {
+      try {
+        edit(null);
+      } catch (error) {
+        notify(error.message, "error");
+      }
+    });
+    el("back").addEventListener("click", () => {
+      selected = null;
+      message.value = "";
+      el("editor").hidden = true;
+      el("menu").hidden = false;
+      notify("");
+      position();
+      custom.focus();
+    });
     message.addEventListener("input", () => {
       open.disabled = !message.value.trim() || !snapshot || stale;
-      status.textContent = message.value.trim() ? "" : "Escreva uma mensagem para abrir WhatsApp.";
-    });
-    el("close").addEventListener("click", () => dialog.close());
-    dialog.addEventListener("close", () => {
-      stale = false;
-      clearDraft();
-      trigger.focus();
+      notify("");
     });
     open.addEventListener("click", () => {
       try {
-        const recipient = checkRecipient();
-        const href = makeWhatsAppUrl(recipient.phone, message.value);
-        const link = document.createElement("a");
-        link.href = href;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        shadow.append(link);
-        link.click();
-        link.remove();
-        status.textContent = "Confirme e envie no WhatsApp. Se a conversa n\xE3o abriu, verifique o bloqueio de novas janelas.";
+        launch(message.value);
       } catch (error) {
-        status.textContent = error.message;
-        open.disabled = true;
+        notify(error.message, "error");
       }
     });
     copy.addEventListener("click", async () => {
+      const template = selected, recipient = snapshot;
       try {
         checkRecipient();
-        if (!config.image) throw new Error("Adicione uma imagem nas defini\xE7\xF5es.");
-        const bytes = Uint8Array.from(atob(config.image.split(",")[1]), (char) => char.charCodeAt(0));
+        const image = template?.image && config.images[template.image];
+        if (!image) throw new Error("Imagem indispon\xEDvel.");
+        copy.disabled = true;
+        notify("A copiar imagem\u2026");
+        const bytes = Uint8Array.from(atob(image.split(",")[1]), (char) => char.charCodeAt(0));
         await navigator.clipboard.write([new ClipboardItem({ "image/png": new Blob([bytes], { type: "image/png" }) })]);
-        if (snapshot && !stale) status.textContent = "Imagem copiada. Envie o texto, depois cole a imagem no WhatsApp com Ctrl+V.";
+        if (snapshot === recipient && selected === template) notify("Imagem copiada. Abra o WhatsApp, envie o texto e cole a imagem com Ctrl+V.", "success");
       } catch {
-        status.textContent = "N\xE3o foi poss\xEDvel copiar. Anexe a imagem guardada no WhatsApp.";
+        if (snapshot === recipient && selected === template) notify("N\xE3o foi poss\xEDvel copiar. Use Guardar imagem e anexe o ficheiro no WhatsApp.", "error");
+      } finally {
+        if (snapshot === recipient && selected === template) copy.disabled = false;
+      }
+    });
+    el("settings").addEventListener("click", async () => {
+      try {
+        const result2 = await chrome.runtime.sendMessage({ type: "open-settings" });
+        if (!result2?.ok) throw new Error();
+      } catch {
+        notify("N\xE3o foi poss\xEDvel abrir as defini\xE7\xF5es. Use o \xEDcone da extens\xE3o no navegador.", "error");
       }
     });
     async function loadConfig() {
+      const request = ++configLoad;
+      configReady = false;
       try {
         const result2 = await chrome.storage.local.get(STORAGE_KEY);
+        if (request !== configLoad) return;
         config = migrateConfig(result2[STORAGE_KEY]);
         configError = "";
       } catch {
-        configError = "N\xE3o foi poss\xEDvel carregar as defini\xE7\xF5es. Abra as defini\xE7\xF5es e guarde novamente.";
+        if (request !== configLoad) return;
+        configError = "N\xE3o foi poss\xEDvel carregar as defini\xE7\xF5es. Abra Configurar mensagens para recuperar.";
       }
       configReady = true;
+      if (expanded && waiting) prepare();
     }
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === "local" && changes[STORAGE_KEY]) {
-        invalidate("As defini\xE7\xF5es foram alteradas. Feche esta janela e volte a abri-la.");
+        invalidate("As mensagens foram alteradas. Atualize para usar as novas op\xE7\xF5es.");
         void loadConfig();
       }
     });
     document.addEventListener("input", (event) => {
-      if (event.composedPath().includes(shadow)) return;
-      if (current && event.target === current.phoneNode) sync();
+      if (!event.composedPath().includes(shadow) && current && event.target === current.phoneNode) sync();
     }, true);
     const timer = window.setInterval(sync, 300);
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) return;
-      sync();
+      if (!document.hidden) sync();
     });
-    const observer = new MutationObserver((records) => {
-      const relevant = records.some((record) => {
-        if (record.target === host) return false;
-        const nodes = [...record.addedNodes, ...record.removedNodes];
-        if (nodes.length && nodes.every((n) => n === host)) return false;
-        return !!current?.root.contains(record.target) || !!current && !current.root.isConnected;
-      });
-      if (relevant) {
-        changedAt = Date.now();
-        invalidate("A ficha foi atualizada. Feche esta janela e volte a abri-la.");
-      }
-      sync();
-    });
+    window.addEventListener("resize", position);
+    window.addEventListener("scroll", position, true);
+    const resize = typeof ResizeObserver === "function" ? new ResizeObserver(position) : null;
+    resize?.observe(panel);
+    const observer = new MutationObserver(sync);
     observer.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["class", "style", "hidden", "aria-hidden", "aria-busy", "disabled", "value"] });
     window.addEventListener("pagehide", (event) => {
-      if (dialog.open) dialog.close();
+      close();
       clearDraft();
       current = null;
       changedAt = Date.now();
       if (!event.persisted) {
         observer.disconnect();
+        resize?.disconnect();
         clearInterval(timer);
       }
     });

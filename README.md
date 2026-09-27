@@ -1,85 +1,92 @@
-**WhatsApp na ficha Zappy — piloto 0.1.0**
+# WhatsApp na ficha Zappy
 
-Esta pasta contém a extensão pronta a instalar e o código-fonte. Não precisa de Node, npm, servidor, conta nova ou chave de API para instalar.
+Extensão local para preparar mensagens a partir da ficha do cliente. Clique em **WhatsApp ▾**, escolha uma mensagem e reveja o envio no WhatsApp. O envio é sempre manual.
 
-**Instalar no Brave ou Chrome**
+## Instalar ou atualizar
 
-1. Extraia o ZIP para uma pasta fixa no computador, por exemplo `Documentos\Zappy-WhatsApp`.
-2. No Brave, escreva `brave://extensions` na barra de endereços. No Chrome, use `chrome://extensions`.
-3. Ative **Modo de programador / Developer mode**.
-4. Clique em **Carregar sem compactação / Load unpacked**.
-5. Escolha a pasta **extension** dentro da pasta extraída. É a pasta que contém `manifest.json`. Não selecione o ZIP nem a pasta superior.
-6. Atualize a página do Zappy. Abra uma ficha de cliente. O botão verde **WhatsApp ▾** deverá aparecer ao lado de **Enviar Acesso à App**.
+1. Guarde esta pasta num local fixo no computador.
+2. Abra `brave://extensions` ou `chrome://extensions` e ative **Modo de programador**.
+3. Clique em **Carregar sem compactação** e escolha a pasta **extension**, onde está `manifest.json`.
+4. Para atualizar uma instalação existente, clique em **Recarregar** no cartão da extensão.
+5. **Atualize também a página do Zappy.** Uma ficha já aberta pode continuar a usar a versão anterior.
 
-Esta é uma instalação local para o piloto. Se o computador for gerido e não permitir extensões locais, use o procedimento autorizado pela organização. A extensão não se instala noutros computadores automaticamente.
+Não precisa de Node, servidor, conta nova ou chave de API para instalar. Teste primeiro numa ficha fictícia ou autorizada. O botão nativo **Enviar Acesso à App** é um procedimento diferente, que pode enviar SMS.
 
-**Primeiro teste, antes de ter o link da app**
+## Usar na ficha
 
-Use uma ficha de teste com um número seu ou autorizado. Não substitua os dados de um cliente real para testar.
+O botão verde com o símbolo WhatsApp aparece à direita de **Ler C. Cidadão**. Se esse botão não existir ou estiver oculto, aparece junto de **Enviar Acesso à App**. As opções mostram o título, um excerto da mensagem e um ícone para distinguir texto, link e imagem.
 
-1. Abra a ficha e aguarde um segundo pelo carregamento.
-2. Clique em **WhatsApp ▾**.
-3. Confira nome e número no painel.
-4. Selecione **Contactar cliente**. A opção da app fica bloqueada enquanto não configurar o link.
-5. Clique em **Abrir WhatsApp**. Confirme a conta do salão e o destinatário. A extensão não envia a mensagem; o envio é manual.
-6. Feche o painel, abra outra ficha de teste e confirme que o nome/número mudam. Teste também fechar e reabrir a ficha.
+- **Destinatário:** nome e telemóvel principal da ficha, com indicativo internacional. Confira-os no topo das opções.
+- **Mensagem sem imagem:** clique no título para abrir o WhatsApp com o texto preparado. Pode editar antes de enviar no próprio WhatsApp.
+- **Escrever mensagem…:** abre um campo para uma mensagem pontual; depois clique em **Abrir WhatsApp**.
+- **Mensagem com imagem:** permite rever o texto, **Copiar imagem** ou **Guardar imagem**, e abrir o WhatsApp.
+- **Configurar mensagens:** abre as opções da extensão num separador. O ícone da extensão abre a mesma página.
 
-Não utilize o botão nativo **Enviar Acesso à App** neste teste: esse é um procedimento diferente, que pode enviar SMS.
+A ficha em carregamento fica disponível automaticamente quando os dados estabilizam. Se mudar de cliente ou de número com as opções abertas, o rascunho anterior é limpo. Clique em **Atualizar destinatário**, confira os novos dados e escolha novamente.
 
-**Configurar mensagens e imagem**
+O painel fecha ao clicar fora, ao clicar novamente em **WhatsApp ▾** ou com **Escape**. Os controlos podem ser usados com o teclado.
 
-Clique em **Definições** no painel, ou no ícone da extensão no menu de extensões do navegador. A página de definições permite:
+## Configurar mensagens
 
-- Indicar o salão, opcionalmente.
-- Guardar o link HTTPS de instalação da app, depois de verificar que pertence ao salão correto. Não coloque um link pessoal de autenticação.
-- Editar as duas opções iniciais ou adicionar outras, até oito.
-- Escolher uma imagem **PNG até 2 MB** (máximo 4096 × 4096 píxeis). Nenhuma imagem está incluída no pacote.
+Na página **Mensagens do WhatsApp**:
 
-Clique em **Guardar definições**. Feche e volte a abrir o painel WhatsApp da ficha para usar as novas definições.
+1. Preencha **Nome do salão** e **Link da app** no topo da página. Estes campos ficam sempre visíveis.
+2. Escolha uma mensagem no seletor e preencha **Título** e **Mensagem**. O título é a opção mostrada na ficha.
+3. Use **Inserir dado do cliente…** para inserir primeiro nome, nome completo, salão ou link na posição do cursor.
+4. Opcionalmente, adicione uma imagem PNG a essa mensagem.
+5. Confira a pré-visualização com o nome fictício Ana Silva. Texto e imagem aparecem separados, como no envio; os restantes valores vêm das suas definições.
+6. Clique em **Guardar alterações** no topo da página e confirme **Alterações guardadas.** Mudar a mensagem selecionada preserva as edições por guardar.
 
-As variáveis disponíveis são `{nome}` (nome completo), `{primeiroNome}` (primeira palavra do nome), `{salao}` e `{linkApp}`. Uma mensagem que use uma variável sem valor fica bloqueada. Pode rever/editar o texto preparado antes de abrir a conversa.
+Pode guardar até **8 mensagens**, com títulos até 60 caracteres e textos até 3000 caracteres. O rascunho pontual admite até 4000 caracteres. Mensagens sem dados necessários continuam visíveis na ficha, com a indicação do que falta configurar.
 
-**Enviar texto e imagem**
+As variáveis são `{primeiroNome}`, `{nome}`, `{salao}` e `{linkApp}`. O link deve usar HTTPS e não incluir credenciais. Não coloque links pessoais de autenticação.
 
-1. Escolha a mensagem e confira o destinatário.
-2. Clique em **Copiar imagem**, se tiver configurado uma.
-3. Clique em **Abrir WhatsApp** e envie o texto.
-4. Clique no campo de escrita do WhatsApp, cole com **Ctrl+V**, confira a pré-visualização e envie a imagem.
+**Remover mensagem** permite **Desfazer** a última remoção enquanto esta página permanecer aberta. Mensagens apagadas não voltam ao recarregar. Alterações por guardar têm aviso ao sair. Se outra página guardar primeiro, o editor impede a substituição silenciosa e pede para recarregar.
 
-O botão de copiar substitui o conteúdo atual da área de transferência. A imagem não é anexada automaticamente pelo link do WhatsApp. Se a cópia ou colagem não funcionar neste computador, anexe o ficheiro PNG diretamente no WhatsApp. O texto e a imagem são tratados como duas mensagens; a extensão não preenche automaticamente a legenda da imagem.
+Definições antigas mantêm títulos, textos e ordem. A imagem global antiga fica associada às mensagens que já a usavam; a partir daí cada associação é explícita, sem depender do título. O formato novo é gravado ao guardar as alterações.
 
-**O que foi verificado e o que falta**
+As duas mensagens iniciais da app usam agora uma saudação sem emoji. Cópias antigas desses modelos, com o restante texto intacto, perdem apenas o emoji inicial ou o caráter corrompido que o substituiu. Mensagens personalizadas conservam os seus emojis válidos.
 
-Os campos foram identificados a partir dos excertos HTML fornecidos: `#telemovelttnc`, `.cust_name` e `#sendAppInviteBtn`. O código lê o valor atual do campo, não o placeholder. Usa o país selecionado apenas para interpretar números nacionais; respeita indicativos internacionais explícitos. Não lê `selectedCustomer` nem chama funções internas do Zappy.
+## Imagens
 
-A estrutura completa da janela não foi fornecida. A extensão procura o menor elemento que contém os três campos e recusa associá-los ao nível do documento inteiro. Se não conseguir identificar uma única ficha visível, impede a preparação em vez de adivinhar.
+Cada mensagem pode ter uma imagem diferente ou nenhuma. **PNG até 2 MB**, com máximo de **4096 × 4096 píxeis**. Imagens iguais partilham armazenamento. O conjunto das definições tem limite de 9 MB; se exceder, reduza ou remova imagens. Uma tentativa de guardar inválida não substitui as definições anteriores.
 
-Os testes automáticos cobrem números, mensagens, configuração, cópia de bytes PNG, mudança de cliente, campos duplicados e ausência de número. Usam DOM e APIs do navegador simulados. **Ainda falta confirmar a instalação real no Brave/Chrome, o aspeto na ficha Zappy, a abertura da conversa e a colagem da imagem no WhatsApp.** A tentativa de verificação visual nesta sessão foi bloqueada pela política do ambiente para páginas locais. Nenhuma mensagem foi enviada e nenhum registo Zappy foi alterado.
+1. Escolha uma mensagem com imagem e clique em **Copiar imagem**.
+2. Clique em **Abrir WhatsApp**, reveja o destinatário e envie o texto.
+3. No campo de escrita do WhatsApp, cole com **Ctrl+V**, reveja a imagem e envie.
 
-Esta versão deve ser testada primeiro num computador. Não considere concluída a integração de produção apenas porque os testes automáticos passam.
+Copiar substitui o conteúdo da área de transferência. Se não funcionar, use **Guardar imagem** e anexe o PNG no WhatsApp. O link não anexa ficheiros: texto e imagem são ações separadas; não há preenchimento automático da legenda.
 
-**Se algo não funcionar**
+## Qual conta envia?
 
-- Botão ausente: confirme que a extensão está ativa, que atualizou a página depois de instalar, e que está em `https://zappysoftware.com/backoffice/…` com uma ficha aberta. Não corre noutros domínios.
-- “A ficha está a atualizar”: feche o painel, aguarde um segundo e reabra.
-- “A ficha foi alterada”: volte a abrir o painel para preparar uma mensagem com os dados atuais.
-- “Não foi possível identificar a janela”: é necessário ajustar a estrutura do leitor à janela real. Envie a mensagem do erro e um pequeno excerto da estrutura envolvente dos campos, com os dados pessoais removidos.
-- Número inválido: confira a ficha e o indicativo. O telemóvel alternativo não é usado automaticamente.
-- App bloqueada: configure o link nas definições. “Contactar cliente” continua disponível.
-- WhatsApp não abre: verifique se o navegador está a bloquear a abertura da nova janela e se a sessão WhatsApp está disponível.
-- Imagem não cola: anexe o PNG manualmente. O comportamento da área de transferência depende do navegador e do WhatsApp utilizado.
+O número na ficha determina **quem recebe**. **Quem envia é a conta com sessão iniciada no WhatsApp Web ou na aplicação que abrir o link.** Confirme a conta do salão antes de enviar. Guardar um número do salão na extensão não selecionaria essa conta.
 
-**Privacidade, atualização e remoção**
+## Se algo não funcionar
 
-A extensão guarda apenas as definições e a imagem neste perfil do navegador. Não guarda a lista de clientes nem o histórico de mensagens. Nome e número são lidos para a ação em curso; o link aberto no WhatsApp inclui o número e o texto e pode aparecer no histórico do navegador. Envie apenas mensagens autorizadas pelo cliente.
+- **Botão ausente:** confirme a extensão ativa, recarregue a extensão e atualize o Zappy. Só corre em `https://zappysoftware.com/backoffice/*`, com uma única ficha visível.
+- **Número inválido:** corrija o telemóvel principal e o indicativo na ficha. O número alternativo nunca é usado automaticamente.
+- **“Não foi possível identificar a janela”:** o leitor precisa de corresponder à estrutura real da ficha. Para análise, forneça apenas um excerto HTML sem dados pessoais.
+- **Mensagem indisponível:** configure o link ou o nome do salão indicado na explicação, ou remova a variável do texto.
+- **Caráter inválido (�):** abra **Configurar mensagens**, escolha a mensagem e apague/escreva novamente o caráter assinalado. Não é possível recuperar automaticamente o caráter original perdido num texto personalizado. O envio desse texto fica bloqueado até à correção; acentos e emojis válidos continuam suportados.
+- **WhatsApp não abre:** permita novas janelas para o Zappy e confirme que o WhatsApp está disponível.
+- **Definições não abrem:** use o ícone da extensão ou as suas opções na página de extensões do navegador.
+- **Erro ao carregar definições:** tente **Recarregar definições**. **Repor mensagens iniciais** exige confirmação e só substitui os dados anteriores quando guardar.
 
-Permissões: acesso de conteúdo ao backoffice indicado, armazenamento local e escrita na área de transferência. Não lê a área de transferência, cookies ou credenciais. Não controla a página do WhatsApp e não tem servidor nem telemetria. A conta que envia é a conta aberta no WhatsApp; a extensão não a seleciona nem a valida.
+## Privacidade e limites
 
-Atualizações deste piloto são manuais: mantenha a pasta e substitua os ficheiros da extensão pela versão seguinte; clique em **Recarregar** na página de extensões e atualize o Zappy. Para remover, clique em **Remover** nessa página; as definições locais da extensão serão perdidas.
+A extensão guarda apenas definições e imagens neste perfil do navegador. Não guarda clientes, rascunhos ou histórico de mensagens. O link do WhatsApp contém o número e texto preparados e pode aparecer no histórico do navegador.
 
-**Para desenvolver**
+Permissões: armazenamento local, escrita na área de transferência e execução do leitor no backoffice indicado. Não lê credenciais, cookies nem área de transferência. Não controla a página do WhatsApp; não tem servidor, telemetria ou envio automático.
 
-Requisitos de desenvolvimento: Node 22.12+ ou Node 24 e npm. Na pasta do projeto:
+O leitor usa `#telemovelttnc`, `.cust_name` e `#sendAppInviteBtn`. Lê o valor atual do campo, não o placeholder. Interpreta números nacionais pelo país selecionado e respeita indicativos explícitos. Campos ambíguos, duplicados ou indisponíveis impedem a preparação.
+
+A estrutura completa da janela real não foi fornecida. A validação usa uma simulação com dados fictícios e uma extensão instalada num perfil Brave isolado. Consulte `VALIDATION.txt` para resultados e limites. A ficha Zappy real e a colagem final no WhatsApp ainda precisam de confirmação no computador de utilização.
+
+Remover a extensão apaga as suas definições locais. Atualizações são manuais.
+
+## Desenvolvimento
+
+Node 22.12+ ou Node 24 e npm:
 
 ```sh
 npm ci --ignore-scripts
@@ -88,8 +95,18 @@ npm run check
 npm test
 ```
 
-O código-fonte está em `src/`. A pasta `extension/` contém a versão compilada. O processo de build preserva os avisos de licença da dependência de números de telefone. O ficheiro de lock fixa as dependências.
+Código em `src/`; extensão pronta a carregar em `extension/`. O build preserva as licenças da biblioteca de números e gera `tests/settings-fixture.html` a partir da página real, evitando uma segunda interface desatualizada.
 
-`tests/fixture.html` e `tests/settings-fixture.html` são simulações locais para desenvolvimento. A primeira captura os links de saída sem abrir o WhatsApp. A configuração de demonstração só existe nessa simulação, nunca na extensão instalada. Não incluem os excertos originais nem os dados pessoais fornecidos pelo utilizador.
+`tests/fixture.html` e `tests/settings-fixture.html` usam dados fictícios e APIs simuladas. Para uso interativo, sirva o repositório num servidor HTTP local. Os links de saída da ficha são capturados sem abrir o WhatsApp.
 
-Não acrescente permissões de outros sites, chamadas a APIs privadas, envios automáticos ou registos de dados de clientes para corrigir um problema de seletor. Concentre eventuais ajustes no leitor `src/adapter.ts`.
+`tests/browser-check.mjs` valida a extensão real num perfil descartável. Usa uma instalação existente de Playwright. Configure `PLAYWRIGHT_MODULE` com o caminho absoluto de `playwright/index.mjs`, `BROWSER_PATH` com Brave/Chromium e, opcionalmente, `VALIDATION_TEMP` com uma pasta temporária existente. Execute:
+
+```sh
+node tests/browser-check.mjs
+```
+
+O teste interceta o Zappy e os links WhatsApp com páginas sintéticas. Guarda capturas e o perfil isolado na pasta temporária indicada no resultado. Não usa o perfil pessoal, não envia mensagens e não altera registos Zappy.
+
+Ícone WhatsApp incorporado de [Simple Icons](https://github.com/simple-icons/simple-icons/blob/develop/icons/whatsapp.svg), obtido em 2026-09-26, sob [CC0 1.0](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md). WhatsApp é marca da respetiva entidade; a extensão não é afiliada. Os restantes ícones são SVG simples desenhados para esta interface. Nenhum ícone é carregado da rede durante a utilização.
+
+Não acrescente permissões de outros sites, APIs privadas ou envio automático para resolver problemas de seletores. Ajustes do leitor pertencem a `src/adapter.ts`.
