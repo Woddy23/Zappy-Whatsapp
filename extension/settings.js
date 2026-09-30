@@ -311,8 +311,15 @@
       removeImage.hidden = !data;
       imageHint.hidden = !!data;
       pickImage.textContent = data ? "Substituir imagem" : "Adicionar imagem";
-      if (data) thumbnail.src = data;
-      else thumbnail.removeAttribute("src");
+      if (data) {
+        thumbnail.src = data;
+        imageBubble.append(output);
+        bubble.hidden = true;
+      } else {
+        thumbnail.removeAttribute("src");
+        bubble.append(output);
+        bubble.hidden = false;
+      }
     };
     let imageRequest = 0;
     removeImage.addEventListener("click", () => {
@@ -410,7 +417,7 @@
     caption.className = "preview-caption";
     caption.textContent = "Exemplo com um nome fict\xEDcio.";
     const imageCaption = document.createElement("span");
-    imageCaption.textContent = "A imagem \xE9 copiada e colada \xE0 parte no WhatsApp.";
+    imageCaption.textContent = "No WhatsApp Web, este texto acompanha a imagem como legenda (at\xE9 1024 caracteres). Reveja e clique em Enviar uma vez.";
     caption.append(imageCaption);
     panel.append(heading, chat, caption);
     grid.append(fields, panel);
@@ -535,6 +542,10 @@
         baseline = ownWrite;
         if (!conflict) {
           dirty = false;
+          for (const row of list.children) {
+            const note = row.querySelector(".image-tools + .field-error");
+            if (note && !note.classList.contains("error")) note.hidden = true;
+          }
           notify("Altera\xE7\xF5es guardadas.", "success");
         }
       });

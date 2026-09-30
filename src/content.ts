@@ -45,7 +45,7 @@ function start(): void {
     <section id="editor" hidden>
       <button id="back" type="button">Voltar às mensagens</button>
       <label id="message-label" for="message">Mensagem</label><textarea id="message" name="message" autocomplete="off" maxlength="4000" spellcheck="true" disabled></textarea>
-      <section id="media" hidden><img id="image" width="160" height="110" alt="Imagem desta mensagem"><button id="copy" type="button" disabled>Copiar imagem</button><a id="download" download="mensagem.png">Guardar imagem</a><p class="note">Envie o texto e cole a imagem com Ctrl+V no WhatsApp. O link não anexa imagens.</p></section>
+      <section id="media" hidden><img id="image" width="160" height="110" alt="Imagem desta mensagem"><button id="copy" type="button" disabled>Copiar imagem</button><a id="download" download="mensagem.png">Guardar imagem</a><p class="note">Abrir WhatsApp Web prepara a imagem com este texto como legenda (até 1024 caracteres). Reveja e clique em Enviar uma vez. Copiar/Guardar imagem são alternativas se a preparação falhar.</p></section>
       <button id="open" type="button" disabled>Abrir WhatsApp</button>
     </section>
     <footer><button id="settings" type="button">${lineIcon('<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="white"/><circle cx="15" cy="17" r="2" fill="white"/>')}<span>Configurar mensagens</span></button><p class="note">Reveja e envie pela conta iniciada no WhatsApp.</p></footer>
@@ -163,6 +163,8 @@ function start(): void {
     message.value = template ? renderMessage(template.text, recipient.name, config) : '';
     message.disabled = false; open.disabled = !message.value.trim(); notify('');
     const image = template?.image ? config.images[template.image] : '';
+    open.textContent = image ? 'Preparar imagem no WhatsApp Web' : 'Abrir WhatsApp';
+    message.maxLength = image ? 1024 : 4000;
     el('media').hidden = !image; copy.disabled = !image;
     if (image) { el<HTMLImageElement>('image').src = image; el<HTMLAnchorElement>('download').href = image; }
     position(); message.focus();
@@ -193,7 +195,21 @@ function start(): void {
     position(); custom.focus();
   });
   message.addEventListener('input', () => { open.disabled = !message.value.trim() || !snapshot || stale; notify(''); });
-  open.addEventListener('click', () => { try { launch(message.value); } catch (error) { notify((error as Error).message, 'error'); } });
+  open.addEventListener('click', async () => {
+    const template = selected, recipient = snapshot;
+    try {
+      const latest = checkRecipient();
+      const image = template?.image ? config.images[template.image] : '';
+      if (!image) { launch(message.value); return; }
+      makeWhatsAppUrl(latest.phone, message.value);
+      if (message.value.length > 1024) throw new Error('A legenda da imagem pode ter até 1024 caracteres. Reduza o texto antes de abrir.');
+      open.disabled = true;
+      const result = await chrome.runtime.sendMessage({ type: 'prepare-image', phone: latest.phone, text: message.value, image });
+      if (!result?.ok) throw new Error(result?.error || 'Não foi possível preparar a imagem. Use Copiar imagem ou Guardar imagem.');
+      if (snapshot === recipient && selected === template) notify('WhatsApp Web aberto. Aguarde a imagem e a legenda; confira o destinatário e clique em Enviar.');
+    } catch (error) { if (snapshot === recipient && selected === template) notify((error as Error).message, 'error'); }
+    finally { if (snapshot === recipient && selected === template) open.disabled = !message.value.trim(); }
+  });
   copy.addEventListener('click', async () => {
     const template = selected, recipient = snapshot;
     try {

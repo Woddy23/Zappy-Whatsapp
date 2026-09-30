@@ -1,4 +1,20 @@
-Validation — 2026-09-26
+Validation update — 2026-09-28
+
+Image-with-caption preparation implemented locally for WhatsApp Web.
+npm run build, npm run check, npm test (42 passed), git diff --check: passed.
+Added tests: tab/token/recipient-scoped one-use handoff; caption limit;
+image paste and caption insertion; existing-draft preservation; zero Send actions.
+Browser tool: intercepted synthetic WhatsApp Web page, actual Chromium
+DataTransfer/File/ClipboardEvent and native contenteditable insertion. PNG and
+multiline Unicode caption prepared, zero sends. Runtime messaging mocked.
+Updated tests/browser-check.mjs for installed-extension attachment handoff;
+that full installed-extension check was not rerun during this update.
+Live authenticated WhatsApp Web DOM, synthetic paste acceptance, and real
+delivery remain unverified. No real WhatsApp message sent. No commit/release.
+New content script scope: https://web.whatsapp.com/*.
+Reload extension and refresh Zappy before checking with an authorized test chat.
+
+Previous validation — 2026-09-26
 
 Scope: current local source and rebuilt extension/; no release or commit.
 

@@ -112,7 +112,7 @@ function addTemplate(t: Template, open = false, imageData = ''): void {
   const thumbnail = document.createElement('img'); thumbnail.className = 'thumbnail'; thumbnail.alt = 'Imagem desta mensagem'; thumbnail.width = 160; thumbnail.height = 110;
   const removeImage = document.createElement('button'); removeImage.type = 'button'; removeImage.className = 'delete remove-image'; removeImage.textContent = 'Remover imagem';
   if (imageData) images.set(t.id, imageData);
-  const refresh = () => { const data = images.get(t.id); thumbnail.hidden = !data; imageBubble.hidden = !data; imageCaption.hidden = !data; removeImage.hidden = !data; imageHint.hidden = !!data; pickImage.textContent = data ? 'Substituir imagem' : 'Adicionar imagem'; if (data) thumbnail.src = data; else thumbnail.removeAttribute('src'); };
+  const refresh = () => { const data = images.get(t.id); thumbnail.hidden = !data; imageBubble.hidden = !data; imageCaption.hidden = !data; removeImage.hidden = !data; imageHint.hidden = !!data; pickImage.textContent = data ? 'Substituir imagem' : 'Adicionar imagem'; if (data) { thumbnail.src = data; imageBubble.append(output); bubble.hidden = true; } else { thumbnail.removeAttribute('src'); bubble.append(output); bubble.hidden = false; } };
   let imageRequest = 0;
   removeImage.addEventListener('click', () => { imageRequest++; images.delete(t.id); file.value = ''; imageStatus.hidden = true; refresh(); changed(); pickImage.focus(); });
   file.addEventListener('change', async () => {
@@ -151,7 +151,7 @@ function addTemplate(t: Template, open = false, imageData = ''): void {
   const imageBubble = document.createElement('div'); imageBubble.className = 'image-bubble'; imageBubble.append(thumbnail);
   chat.append(bubble, imageBubble);
   const caption = document.createElement('p'); caption.className = 'preview-caption'; caption.textContent = 'Exemplo com um nome fictício.';
-  const imageCaption = document.createElement('span'); imageCaption.textContent = 'A imagem é copiada e colada à parte no WhatsApp.'; caption.append(imageCaption);
+  const imageCaption = document.createElement('span'); imageCaption.textContent = 'No WhatsApp Web, este texto acompanha a imagem como legenda (até 1024 caracteres). Reveja e clique em Enviar uma vez.'; caption.append(imageCaption);
   panel.append(heading, chat, caption);
   grid.append(fields, panel); row.append(grid); list.append(row); refresh(); refreshPicker(open ? t.id : picker.value);
 }
@@ -213,7 +213,7 @@ byId('settings-form').addEventListener('submit', async event => {
       ownWrite = fingerprint(c);
       await chrome.storage.local.set({ [STORAGE_KEY]: c });
       baseline = ownWrite;
-      if (!conflict) { dirty = false; notify('Alterações guardadas.', 'success'); }
+      if (!conflict) { dirty = false; for (const row of list.children) { const note = row.querySelector<HTMLElement>('.image-tools + .field-error'); if (note && !note.classList.contains('error')) note.hidden = true; } notify('Alterações guardadas.', 'success'); }
     });
   } catch (error) { notify((error as Error).message || 'Não foi possível guardar. Tente novamente.', 'error'); }
   finally { ownWrite = undefined; saving = false; controls(); }

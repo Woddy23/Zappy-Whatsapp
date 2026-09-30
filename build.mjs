@@ -1,7 +1,7 @@
 import { build } from 'esbuild';
 import { mkdir, copyFile, writeFile, readFile } from 'node:fs/promises';
 await mkdir('extension', { recursive: true });
-await build({ entryPoints: ['src/content.ts', 'src/settings.ts', 'src/background.ts'], outdir: 'extension', bundle: true, format: 'iife', target: 'chrome120', minify: false, legalComments: 'eof' });
+await build({ entryPoints: ['src/content.ts', 'src/settings.ts', 'src/background.ts', 'src/whatsapp.ts'], outdir: 'extension', bundle: true, format: 'iife', target: 'chrome120', minify: false, legalComments: 'eof' });
 for (const file of ['settings.html', 'settings.css']) await copyFile(`src/${file}`, `extension/${file}`);
 const settingsFixture = (await readFile('src/settings.html', 'utf8'))
   .replace('href="settings.css"', 'href="../extension/settings.css"')
@@ -15,7 +15,7 @@ const manifest = {
   action: { default_title: 'Configurar mensagens — WhatsApp na ficha' },
   options_page: 'settings.html',
   background: { service_worker: 'background.js' },
-  content_scripts: [{ matches: ['https://zappysoftware.com/backoffice/*'], js: ['content.js'], run_at: 'document_idle' }],
+  content_scripts: [{ matches: ['https://zappysoftware.com/backoffice/*'], js: ['content.js'], run_at: 'document_idle' }, { matches: ['https://web.whatsapp.com/*'], js: ['whatsapp.js'], run_at: 'document_idle' }],
   content_security_policy: { extension_pages: "script-src 'self'; object-src 'none'" }
 };
 await writeFile('extension/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
