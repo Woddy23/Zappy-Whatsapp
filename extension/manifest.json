@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "WhatsApp na ficha — piloto Zappy",
+  "name": "Ficha Cliente Whatsapp Zappy",
   "version": "0.1.0",
   "description": "Prepara mensagens para o cliente da ficha Zappy. O envio é feito manualmente no WhatsApp.",
   "minimum_chrome_version": "120",
@@ -22,15 +22,6 @@
       ],
       "js": [
         "content.js"
-      ],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": [
-        "https://web.whatsapp.com/*"
-      ],
-      "js": [
-        "whatsapp.js"
       ],
       "run_at": "document_idle"
     }

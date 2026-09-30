@@ -417,7 +417,7 @@
     caption.className = "preview-caption";
     caption.textContent = "Exemplo com um nome fict\xEDcio.";
     const imageCaption = document.createElement("span");
-    imageCaption.textContent = "No WhatsApp Web, este texto acompanha a imagem como legenda (at\xE9 1024 caracteres). Reveja e clique em Enviar uma vez.";
+    imageCaption.textContent = "O texto abre preenchido no WhatsApp. A imagem fica copiada para colar com Ctrl+V quando quiser.";
     caption.append(imageCaption);
     panel.append(heading, chat, caption);
     grid.append(fields, panel);

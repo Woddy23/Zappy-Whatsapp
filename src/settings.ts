@@ -151,7 +151,7 @@ function addTemplate(t: Template, open = false, imageData = ''): void {
   const imageBubble = document.createElement('div'); imageBubble.className = 'image-bubble'; imageBubble.append(thumbnail);
   chat.append(bubble, imageBubble);
   const caption = document.createElement('p'); caption.className = 'preview-caption'; caption.textContent = 'Exemplo com um nome fictício.';
-  const imageCaption = document.createElement('span'); imageCaption.textContent = 'No WhatsApp Web, este texto acompanha a imagem como legenda (até 1024 caracteres). Reveja e clique em Enviar uma vez.'; caption.append(imageCaption);
+  const imageCaption = document.createElement('span'); imageCaption.textContent = 'O texto abre preenchido no WhatsApp. A imagem fica copiada para colar com Ctrl+V quando quiser.'; caption.append(imageCaption);
   panel.append(heading, chat, caption);
   grid.append(fields, panel); row.append(grid); list.append(row); refresh(); refreshPicker(open ? t.id : picker.value);
 }

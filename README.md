@@ -19,7 +19,7 @@ O botão verde com o símbolo WhatsApp aparece à direita de **Ler C. Cidadão**
 - **Destinatário:** nome e telemóvel principal da ficha, com indicativo internacional. Confira-os no topo das opções.
 - **Mensagem sem imagem:** clique no título para abrir o WhatsApp com o texto preparado. Pode editar antes de enviar no próprio WhatsApp.
 - **Escrever mensagem…:** abre um campo para uma mensagem pontual; depois clique em **Abrir WhatsApp**.
-- **Mensagem com imagem:** permite rever o texto e **Preparar imagem no WhatsApp Web**. A extensão prepara a imagem e o texto como legenda; confirme a pré-visualização e clique em **Enviar** uma vez. **Copiar imagem** e **Guardar imagem** ficam disponíveis como alternativas.
+- **Mensagem com imagem:** reveja o texto e clique em **Copiar imagem e abrir WhatsApp**. O texto abre preenchido e a imagem fica copiada. Cole com **Ctrl+V** antes ou depois de enviar o texto.
 - **Configurar mensagens:** abre as opções da extensão num separador. O ícone da extensão abre a mesma página.
 
 A ficha em carregamento fica disponível automaticamente quando os dados estabilizam. Se mudar de cliente ou de número com as opções abertas, o rascunho anterior é limpo. Clique em **Atualizar destinatário**, confira os novos dados e escolha novamente.
@@ -34,7 +34,7 @@ Na página **Mensagens do WhatsApp**:
 2. Escolha uma mensagem no seletor e preencha **Título** e **Mensagem**. O título é a opção mostrada na ficha.
 3. Use **Inserir dado do cliente…** para inserir primeiro nome, nome completo, salão ou link na posição do cursor.
 4. Opcionalmente, adicione uma imagem PNG a essa mensagem.
-5. Confira a pré-visualização com o nome fictício Ana Silva. Nas mensagens com imagem, o texto será a legenda no WhatsApp Web; os restantes valores vêm das suas definições.
+5. Confira a pré-visualização com o nome fictício Ana Silva. Os restantes valores vêm das suas definições; texto e imagem são preparados para rever no WhatsApp.
 6. Clique em **Guardar alterações** no topo da página e confirme **Alterações guardadas.** Mudar a mensagem selecionada preserva as edições por guardar.
 
 Pode guardar até **8 mensagens**, com títulos até 60 caracteres e textos até 3000 caracteres. O rascunho pontual admite até 4000 caracteres. Mensagens sem dados necessários continuam visíveis na ficha, com a indicação do que falta configurar.
@@ -51,12 +51,11 @@ As duas mensagens iniciais da app usam agora uma saudação sem emoji. Cópias a
 
 Cada mensagem pode ter uma imagem diferente ou nenhuma. **PNG até 2 MB**, com máximo de **4096 × 4096 píxeis**. Imagens iguais partilham armazenamento. O conjunto das definições tem limite de 9 MB; se exceder, reduza ou remova imagens. Uma tentativa de guardar inválida não substitui as definições anteriores.
 
-1. Escolha uma mensagem com imagem e reveja o texto personalizado. A preparação admite legendas até **1024 caracteres**, incluindo os dados do cliente.
-2. Clique em **Preparar imagem no WhatsApp Web**. Abre um novo separador em `web.whatsapp.com`, sem enviar texto separado.
-3. Aguarde o aviso **Imagem e legenda preparadas**. Não mude de conversa nem escreva durante a preparação.
-4. Confirme o destinatário, a conta, a imagem e a legenda na pré-visualização do WhatsApp. Clique em **Enviar** uma vez: o cliente recebe uma imagem com legenda.
+1. Escolha uma mensagem com imagem e reveja o texto personalizado.
+2. Clique em **Copiar imagem e abrir WhatsApp**. A imagem é copiada e o texto abre preenchido na conversa.
+3. Cole a imagem com **Ctrl+V**, antes ou depois de enviar o texto. Reveja no WhatsApp e envie quando quiser.
 
-É necessário ter sessão iniciada no WhatsApp Web. A integração usa o editor visível, sem APIs privadas, e nunca clica em Enviar. Não prepara anexos no WhatsApp Desktop. Se o editor mudar, houver um rascunho existente ou a preparação falhar, aparece um erro com a imagem para guardar e a legenda para copiar. Pode também usar **Copiar imagem** no Zappy; essa alternativa substitui a área de transferência.
+A extensão não controla o editor do WhatsApp nem clica em Enviar. O texto preenchido não é automaticamente convertido em legenda: confira a pré-visualização ao colar. Se a cópia falhar, tente novamente ou use **Guardar imagem** e anexe o PNG manualmente.
 
 ## Qual conta envia?
 
@@ -75,9 +74,9 @@ O número na ficha determina **quem recebe**. **Quem envia é a conta com sessã
 
 ## Privacidade e limites
 
-A extensão guarda definições e imagens neste perfil do navegador. Para preparar um anexo, guarda temporariamente número, legenda e imagem na memória de sessão da extensão, com validade de dois minutos; o rascunho é consumido uma vez e removido ao fechar o separador. Não guarda histórico de mensagens. O link de texto contém o número e texto preparados e pode aparecer no histórico do navegador; o link de imagem contém o número e um identificador aleatório, sem legenda ou imagem.
+A extensão guarda apenas definições e imagens neste perfil do navegador. Não guarda clientes, rascunhos ou histórico de mensagens. O link de texto contém o número e texto preparados e pode aparecer no histórico do navegador; o link de imagem contém apenas o número. A cópia de imagem ou legenda substitui a área de transferência.
 
-Permissões: armazenamento, escrita na área de transferência e execução no backoffice indicado e em `https://web.whatsapp.com/*`. Não lê credenciais, cookies nem área de transferência. Prepara anexos no editor do WhatsApp Web apenas quando solicitado no Zappy; não tem servidor, telemetria ou envio automático.
+Permissões: armazenamento local, escrita na área de transferência e execução do leitor no backoffice indicado. Não lê credenciais, cookies nem área de transferência. Não controla a página do WhatsApp; não tem servidor, telemetria ou envio automático.
 
 O leitor usa `#telemovelttnc`, `.cust_name` e `#sendAppInviteBtn`. Lê o valor atual do campo, não o placeholder. Interpreta números nacionais pelo país selecionado e respeita indicativos explícitos. Campos ambíguos, duplicados ou indisponíveis impedem a preparação.
 

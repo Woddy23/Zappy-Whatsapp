@@ -2497,7 +2497,7 @@
     #choices{display:grid;gap:5px;margin:10px 0 12px}.choice-row{min-width:0}.choice{display:flex;align-items:center;gap:11px;width:100%;min-height:60px;text-align:left;padding:10px;border:1px solid #e1e8e3;border-radius:8px;background:#fff;overflow-wrap:anywhere}.choice-icon{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;color:#397658;background:#f0f5f2;border-radius:7px}.choice-content{display:block;min-width:0;flex:1}.choice-title{display:block;font-size:13px;font-weight:600;line-height:1.4}.choice-preview{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;font-weight:400;color:#63756a;margin-top:3px}.choice .chevron{width:14px;height:14px;color:#809086}.choice:disabled{opacity:1;color:#748078;background:#fafbf9;border-color:#e8ede9}.choice:disabled .choice-icon{color:#748078;background:#f0f2ef}.choice:disabled .chevron{display:none}.choice-note{font-size:12px;color:#63756a;margin:4px 10px 6px;overflow-wrap:anywhere}.choice:not(:disabled):is(:hover,:focus-visible){background:#edf7f0;border-color:#76ad8b;box-shadow:inset 3px 0 #17754f}.choice:not(:disabled):is(:hover,:focus-visible) .choice-icon{background:#d9efdf;color:#14653d}.choice:not(:disabled):is(:hover,:focus-visible) .chevron{color:#17754f}.choice:active:not(:disabled){background:#e1f1e7}
     #custom,#settings,#back{display:flex;align-items:center;gap:9px;padding:9px 8px;text-align:left;color:#176b46}#custom{width:100%;border:1px dashed #bfd1c5;border-radius:7px;font-size:13px}#settings{font-size:12px}#back{margin:4px 0;font-size:13px}#custom:hover:not(:disabled),#back:hover,#settings:hover,#close:hover{background:#eff6f1}#open:hover:not(:disabled){background:#125f40}
     #status{color:#456257;background:#f1f5f3;border-left:3px solid #9cb5a8;padding:8px 10px;font-size:13px;margin:10px 0;overflow-wrap:anywhere}#status[data-kind=error]{color:#9f351d;background:#fff4f0;border-color:#ba4b2b}#status[data-kind=success]{color:#176b46;background:#eff6f1;border-color:#17754f}#status:empty{display:none}
-    #retry,#copy{background:#eff6f1;border:1px solid #b5cabe;padding:9px 12px}label{display:block;font-weight:600;margin:8px 0 5px}textarea{width:100%;height:145px;min-height:90px;resize:vertical;padding:10px;border:1px solid #9cb5a8;border-radius:6px;color:#20372d;background:#fff;line-height:1.5;font-size:15px}
+    #retry{background:#eff6f1;border:1px solid #b5cabe;padding:9px 12px}label{display:block;font-weight:600;margin:8px 0 5px}textarea{width:100%;height:145px;min-height:90px;resize:vertical;padding:10px;border:1px solid #9cb5a8;border-radius:6px;color:#20372d;background:#fff;line-height:1.5;font-size:15px}
     #media{margin:12px 0;border-top:1px solid #e3e9e5;padding-top:12px}#image{display:block;max-width:100%;object-fit:contain;object-position:left center;margin-bottom:10px}#download{display:inline-block;font-size:13px;color:#176b46;padding:9px}#download:hover{text-decoration-thickness:2px}
     #open{background:#17754f;color:#fff;padding:11px 14px;font-weight:600;width:100%;margin:8px 0}footer{border-top:1px solid #e3e9e5;margin-top:14px;padding-top:7px}footer .note{margin:4px 8px 0;font-size:11px}
     :focus-visible{outline:2px solid #17754f;outline-offset:2px}#panel:focus{outline:none}#trigger:focus-visible{outline-color:#125f40}[hidden]{display:none!important}
@@ -2512,15 +2512,15 @@
     <section id="editor" hidden>
       <button id="back" type="button">Voltar \xE0s mensagens</button>
       <label id="message-label" for="message">Mensagem</label><textarea id="message" name="message" autocomplete="off" maxlength="4000" spellcheck="true" disabled></textarea>
-      <section id="media" hidden><img id="image" width="160" height="110" alt="Imagem desta mensagem"><button id="copy" type="button" disabled>Copiar imagem</button><a id="download" download="mensagem.png">Guardar imagem</a><p class="note">Abrir WhatsApp Web prepara a imagem com este texto como legenda (at\xE9 1024 caracteres). Reveja e clique em Enviar uma vez. Copiar/Guardar imagem s\xE3o alternativas se a prepara\xE7\xE3o falhar.</p></section>
       <button id="open" type="button" disabled>Abrir WhatsApp</button>
+      <section id="media" hidden><img id="image" width="160" height="110" alt="Imagem desta mensagem"><p class="note">O texto abre preenchido no WhatsApp. Cole a imagem com Ctrl+V antes ou depois de enviar o texto.</p><a id="download" download="mensagem.png">Guardar imagem</a></section>
     </section>
     <footer><button id="settings" type="button">${lineIcon('<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="white"/><circle cx="15" cy="17" r="2" fill="white"/>')}<span>Configurar mensagens</span></button><p class="note">Reveja e envie pela conta iniciada no WhatsApp.</p></footer>
   </div>`;
     const el = (id) => shadow.getElementById(id);
     const trigger = el("trigger"), panel = el("panel");
     const message = el("message"), open = el("open");
-    const copy = el("copy"), custom = el("custom");
+    const custom = el("custom");
     const choices = el("choices"), status = el("status");
     trigger.popoverTargetElement = panel;
     trigger.popoverTargetAction = "toggle";
@@ -2542,7 +2542,6 @@
       message.value = "";
       message.disabled = true;
       open.disabled = true;
-      copy.disabled = true;
       custom.disabled = true;
       el("recipient").textContent = "";
       el("editor").hidden = true;
@@ -2695,10 +2694,9 @@ ${snapshot.phone}`;
       open.disabled = !message.value.trim();
       notify("");
       const image = template?.image ? config.images[template.image] : "";
-      open.textContent = image ? "Preparar imagem no WhatsApp Web" : "Abrir WhatsApp";
-      message.maxLength = image ? 1024 : 4e3;
+      open.textContent = image ? "Copiar imagem e abrir WhatsApp" : "Abrir WhatsApp";
+      message.maxLength = 4e3;
       el("media").hidden = !image;
-      copy.disabled = !image;
       if (image) {
         el("image").src = image;
         el("download").href = image;
@@ -2770,32 +2768,19 @@ ${snapshot.phone}`;
           return;
         }
         makeWhatsAppUrl(latest.phone, message.value);
-        if (message.value.length > 1024) throw new Error("A legenda da imagem pode ter at\xE9 1024 caracteres. Reduza o texto antes de abrir.");
+        const text = message.value;
         open.disabled = true;
-        const result2 = await chrome.runtime.sendMessage({ type: "prepare-image", phone: latest.phone, text: message.value, image });
-        if (!result2?.ok) throw new Error(result2?.error || "N\xE3o foi poss\xEDvel preparar a imagem. Use Copiar imagem ou Guardar imagem.");
-        if (snapshot === recipient && selected === template) notify("WhatsApp Web aberto. Aguarde a imagem e a legenda; confira o destinat\xE1rio e clique em Enviar.");
-      } catch (error) {
-        if (snapshot === recipient && selected === template) notify(error.message, "error");
-      } finally {
-        if (snapshot === recipient && selected === template) open.disabled = !message.value.trim();
-      }
-    });
-    copy.addEventListener("click", async () => {
-      const template = selected, recipient = snapshot;
-      try {
-        checkRecipient();
-        const image = template?.image && config.images[template.image];
-        if (!image) throw new Error("Imagem indispon\xEDvel.");
-        copy.disabled = true;
-        notify("A copiar imagem\u2026");
         const bytes = Uint8Array.from(atob(image.split(",")[1]), (char) => char.charCodeAt(0));
         await navigator.clipboard.write([new ClipboardItem({ "image/png": new Blob([bytes], { type: "image/png" }) })]);
-        if (snapshot === recipient && selected === template) notify("Imagem copiada. Abra o WhatsApp, envie o texto e cole a imagem com Ctrl+V.", "success");
-      } catch {
-        if (snapshot === recipient && selected === template) notify("N\xE3o foi poss\xEDvel copiar. Use Guardar imagem e anexe o ficheiro no WhatsApp.", "error");
+        checkRecipient();
+        if (selected !== template) return;
+        const result2 = await chrome.runtime.sendMessage({ type: "open-image-chat", phone: latest.phone, text });
+        if (!result2?.ok) throw new Error(result2?.error || "Imagem copiada, mas o WhatsApp n\xE3o abriu. Use Abrir conversa sem copiar.");
+        if (snapshot === recipient && selected === template) notify("Imagem copiada e texto preparado. Cole no WhatsApp com Ctrl+V quando quiser.", "success");
+      } catch (error) {
+        if (snapshot === recipient && selected === template) notify(`N\xE3o foi poss\xEDvel concluir. ${error.message} Tente novamente ou use Guardar imagem para anexar manualmente.`, "error");
       } finally {
-        if (snapshot === recipient && selected === template) copy.disabled = false;
+        if (snapshot === recipient && selected === template) open.disabled = !message.value.trim();
       }
     });
     el("settings").addEventListener("click", async () => {

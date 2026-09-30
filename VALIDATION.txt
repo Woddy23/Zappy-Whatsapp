@@ -1,4 +1,16 @@
-Validation update — 2026-09-28
+Validation update — 2026-09-29
+
+Automatic WhatsApp attachment integration replaced with user-controlled copy/paste.
+Image button copies PNG then opens wa.me conversation without text. Separate
+Copy caption button preserves edited text; image must be pasted before caption copy.
+Removed WhatsApp content script and related site access/session-draft handoff.
+Numbered instructions and download/open-without-copy fallbacks added.
+Live WhatsApp final paste and delivery require user confirmation; no message sent.
+Build and TypeScript passed; 41 tests passed. Browser fixture checked real PNG
+clipboard write, caption copy, captured number-only URL, copy failure fallback,
+and 375px panel bounds. Browser fixture used simulated extension APIs.
+
+Previous validation update — 2026-09-28
 
 Image-with-caption preparation implemented locally for WhatsApp Web.
 npm run build, npm run check, npm test (42 passed), git diff --check: passed.
