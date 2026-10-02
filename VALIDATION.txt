@@ -1,4 +1,26 @@
-Validation update — 2026-09-29
+Current reproducible replacement validation — 2026-10-02
+
+Original test sources could not be recovered from available Git refs/history,
+reflog, unreachable commit trees or local artifacts. Historical notes below
+are provenance, not coverage claims for the replacement suite.
+
+Node 24.11.1: npm ci --ignore-scripts, npm run check, npm run build passed.
+npm test: 11 regression tests passed, exercising production core/adapter modules,
+including oversized image and total configuration-budget rejection.
+tests/run.mjs rejects an empty test-file set; compilation belongs to test setup.
+Build no longer generates a settings fixture dependent on missing browser mocks.
+
+npm run test:browser passed with Python Playwright 1.61.0 and Chromium
+149.0.7827.55: actual extension injection, recipient/template handoff,
+changed-phone draft invalidation, immediate launch recheck, actual options
+save/stale-tab conflict, undo and invalid-save preservation. Synthetic Zappy
+fixture and intercepted WhatsApp only. No message sent or production data used.
+
+Not covered: live Zappy layout, final WhatsApp image paste/delivery, image
+clipboard regression, truly simultaneous saves, full accessibility/responsive
+checks. See docs/development.md for reproducible prerequisites and scope.
+
+Historical validation update — 2026-09-29
 
 Automatic WhatsApp attachment integration replaced with user-controlled copy/paste.
 Image button copies PNG then opens wa.me conversation without text. Separate

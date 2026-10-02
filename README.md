@@ -1,112 +1,122 @@
-# WhatsApp na ficha Zappy
+# Zappy WhatsApp Helper
 
-Extensão local para preparar mensagens a partir da ficha do cliente. Clique em **WhatsApp ▾**, escolha uma mensagem e reveja o envio no WhatsApp. O envio é sempre manual.
+Prepare personalized WhatsApp messages from a Zappy customer record, without copying the recipient and composing the same text each time.
 
-## Instalar ou atualizar
+**The extension prepares the conversation. You review and send in WhatsApp.**
 
-1. Guarde esta pasta num local fixo no computador.
-2. Abra `brave://extensions` ou `chrome://extensions` e ative **Modo de programador**.
-3. Clique em **Carregar sem compactação** e escolha a pasta **extension**, onde está `manifest.json`.
-4. Para atualizar uma instalação existente, clique em **Recarregar** no cartão da extensão.
-5. **Atualize também a página do Zappy.** Uma ficha já aberta pode continuar a usar a versão anterior.
+[Português: instalação e utilização](docs/README.pt.md) · [Install](#install-and-use) · [Engineering details](docs/architecture.md)
 
-Não precisa de Node, servidor, conta nova ou chave de API para instalar. Teste primeiro numa ficha fictícia ou autorizada. O botão nativo **Enviar Acesso à App** é um procedimento diferente, que pode enviar SMS.
+![WhatsApp helper beside a synthetic Zappy customer record, showing a fictitious recipient and reusable message templates](docs/assets/customer-panel.png)
 
-## Usar na ficha
+*Actual extension UI on a synthetic customer record with fictitious data. The interface is in Portuguese.*
 
-O botão verde com o símbolo WhatsApp aparece à direita de **Ler C. Cidadão**. Se esse botão não existir ou estiver oculto, aparece junto de **Enviar Acesso à App**. As opções mostram o título, um excerto da mensagem e um ícone para distinguir texto, link e imagem.
+## Why it exists
 
-- **Destinatário:** nome e telemóvel principal da ficha, com indicativo internacional. Confira-os no topo das opções.
-- **Mensagem sem imagem:** clique no título para abrir o WhatsApp com o texto preparado. Pode editar antes de enviar no próprio WhatsApp.
-- **Escrever mensagem…:** abre um campo para uma mensagem pontual; depois clique em **Abrir WhatsApp**.
-- **Mensagem com imagem:** reveja o texto e clique em **Copiar imagem e abrir WhatsApp**. O texto abre preenchido e a imagem fica copiada. Cole com **Ctrl+V** antes ou depois de enviar o texto.
-- **Configurar mensagens:** abre as opções da extensão num separador. O ícone da extensão abre a mesma página.
+Salon staff already work inside Zappy customer records. Moving to WhatsApp means finding the right number and preparing messages that often repeat the same instructions.
 
-A ficha em carregamento fica disponível automaticamente quando os dados estabilizam. Se mudar de cliente ou de número com as opções abertas, o rascunho anterior é limpo. Clique em **Atualizar destinatário**, confira os novos dados e escolha novamente.
+Built by [Rafael Lopes](https://github.com/Woddy23) for this Portuguese-speaking salon workflow, the extension adds message preparation to the existing record. It uses the primary phone number, fills reusable templates, and leaves the final action with the person contacting the customer.
 
-O painel fecha ao clicar fora, ao clicar novamente em **WhatsApp ▾** ou com **Escape**. Os controlos podem ser usados com o teclado.
+## What it does
 
-## Configurar mensagens
+- Reads the current customer's name and primary phone number.
+- Validates international numbers and uses the selected country for national numbers.
+- Prepares reusable templates with customer name, salon name, and app-link variables.
+- Supports one-off messages and optional PNGs copied for manual attachment.
+- Saves configuration locally and blocks preparation when the recipient cannot be identified safely.
 
-Na página **Mensagens do WhatsApp**:
+It does not send automatically, select the sender's WhatsApp account, or replace Zappy's native app-invitation action.
 
-1. Preencha **Nome do salão** e **Link da app** no topo da página. Estes campos ficam sempre visíveis.
-2. Escolha uma mensagem no seletor e preencha **Título** e **Mensagem**. O título é a opção mostrada na ficha.
-3. Use **Inserir dado do cliente…** para inserir primeiro nome, nome completo, salão ou link na posição do cursor.
-4. Opcionalmente, adicione uma imagem PNG a essa mensagem.
-5. Confira a pré-visualização com o nome fictício Ana Silva. Os restantes valores vêm das suas definições; texto e imagem são preparados para rever no WhatsApp.
-6. Clique em **Guardar alterações** no topo da página e confirme **Alterações guardadas.** Mudar a mensagem selecionada preserva as edições por guardar.
+## How it works
 
-Pode guardar até **8 mensagens**, com títulos até 60 caracteres e textos até 3000 caracteres. O rascunho pontual admite até 4000 caracteres. Mensagens sem dados necessários continuam visíveis na ficha, com a indicação do que falta configurar.
+A content script reads the visible customer record. A DOM adapter identifies the fields, phone validation normalizes the recipient, and the template engine prepares the message. The extension opens a WhatsApp conversation URL; the user reviews and sends there.
 
-As variáveis são `{primeiroNome}`, `{nome}`, `{salao}` e `{linkApp}`. O link deve usar HTTPS e não incluir credenciais. Não coloque links pessoais de autenticação.
+For image messages, the PNG is copied after a user click and pasted manually in WhatsApp. The image is not attached through the URL.
 
-**Remover mensagem** permite **Desfazer** a última remoção enquanto esta página permanecer aberta. Mensagens apagadas não voltam ao recarregar. Alterações por guardar têm aviso ao sair. Se outra página guardar primeiro, o editor impede a substituição silenciosa e pede para recarregar.
+See [architecture and integration boundaries](docs/architecture.md).
 
-Definições antigas mantêm títulos, textos e ordem. A imagem global antiga fica associada às mensagens que já a usavam; a partir daí cada associação é explícita, sem depender do título. O formato novo é gravado ao guardar as alterações.
+## Engineering decisions
 
-As duas mensagens iniciais da app usam agora uma saudação sem emoji. Cópias antigas desses modelos, com o restante texto intacto, perdem apenas o emoji inicial ou o caráter corrompido que o substituiu. Mensagens personalizadas conservam os seus emojis válidos.
+- **Reject ambiguous records.** Fields must be uniquely visible and share a customer container. The adapter refuses whole-document matching.
+- **Recheck the recipient.** Changing the customer or phone number invalidates the draft. The recipient is checked again before opening WhatsApp and after asynchronous image copying.
+- **Validate rather than guess.** Phone handling uses `libphonenumber-js`; an alternate number is never selected automatically.
+- **Protect local edits.** Versioned configuration supports older settings. Saves use Web Locks and a baseline comparison to prevent stale settings tabs from silently overwriting newer changes.
+- **Keep the integration narrow.** The extension has no WhatsApp content script and does not manipulate its Send button.
 
-## Imagens
+**Stack:** TypeScript · Manifest V3 · native browser APIs · libphonenumber-js · esbuild.
 
-Cada mensagem pode ter uma imagem diferente ou nenhuma. **PNG até 2 MB**, com máximo de **4096 × 4096 píxeis**. Imagens iguais partilham armazenamento. O conjunto das definições tem limite de 9 MB; se exceder, reduza ou remova imagens. Uma tentativa de guardar inválida não substitui as definições anteriores.
+## Install and use
 
-1. Escolha uma mensagem com imagem e reveja o texto personalizado.
-2. Clique em **Copiar imagem e abrir WhatsApp**. A imagem é copiada e o texto abre preenchido na conversa.
-3. Cole a imagem com **Ctrl+V**, antes ou depois de enviar o texto. Reveja no WhatsApp e envie quando quiser.
+Manual installation in Chrome or Brave. The manifest requires Chromium 120 or later. No Node.js, server, API key, or additional account is needed to load the committed extension.
 
-A extensão não controla o editor do WhatsApp nem clica em Enviar. O texto preenchido não é automaticamente convertido em legenda: confira a pré-visualização ao colar. Se a cópia falhar, tente novamente ou use **Guardar imagem** e anexe o PNG manualmente.
+1. [Download the repository ZIP](https://github.com/Woddy23/Zappy-Whatsapp/archive/refs/heads/main.zip) and extract it into a permanent folder.
+2. Open `chrome://extensions` or `brave://extensions` and enable **Developer mode**.
+3. Choose **Load unpacked** and select the extracted repository's **`extension/`** folder—the folder containing `manifest.json`.
+4. Refresh Zappy, then open the extension icon to configure messages.
 
-## Qual conta envia?
+The extension runs only on `https://zappysoftware.com/backoffice/*`.
 
-O número na ficha determina **quem recebe**. **Quem envia é a conta com sessão iniciada no WhatsApp Web ou na aplicação que abrir o link.** Confirme a conta do salão antes de enviar. Guardar um número do salão na extensão não selecionaria essa conta.
+To use it:
 
-## Se algo não funcionar
+1. Open one customer record and click **WhatsApp ▾**.
+2. Check the displayed name and number, then choose a template or **Escrever mensagem…**.
+3. Review the prepared conversation in WhatsApp and send manually.
 
-- **Botão ausente:** confirme a extensão ativa, recarregue a extensão e atualize o Zappy. Só corre em `https://zappysoftware.com/backoffice/*`, com uma única ficha visível.
-- **Número inválido:** corrija o telemóvel principal e o indicativo na ficha. O número alternativo nunca é usado automaticamente.
-- **“Não foi possível identificar a janela”:** o leitor precisa de corresponder à estrutura real da ficha. Para análise, forneça apenas um excerto HTML sem dados pessoais.
-- **Mensagem indisponível:** configure o link ou o nome do salão indicado na explicação, ou remova a variável do texto.
-- **Caráter inválido (�):** abra **Configurar mensagens**, escolha a mensagem e apague/escreva novamente o caráter assinalado. Não é possível recuperar automaticamente o caráter original perdido num texto personalizado. O envio desse texto fica bloqueado até à correção; acentos e emojis válidos continuam suportados.
-- **WhatsApp não abre:** permita novas janelas para o Zappy e confirme que o WhatsApp está disponível.
-- **Definições não abrem:** use o ícone da extensão ou as suas opções na página de extensões do navegador.
-- **Erro ao carregar definições:** tente **Recarregar definições**. **Repor mensagens iniciais** exige confirmação e só substitui os dados anteriores quando guardar.
+Text-only templates open WhatsApp directly. Image templates and one-off messages provide an editable field in the extension. For PNGs, use **Copiar imagem e abrir WhatsApp**, then paste with **Ctrl+V**.
 
-## Privacidade e limites
+The sender is the account signed into whichever WhatsApp application handles the link.
 
-A extensão guarda apenas definições e imagens neste perfil do navegador. Não guarda clientes, rascunhos ou histórico de mensagens. O link de texto contém o número e texto preparados e pode aparecer no histórico do navegador; o link de imagem contém apenas o número. A cópia de imagem ou legenda substitui a área de transferência.
+**Updates:** replace the extension files in the same installation folder, reload the extension, and refresh Zappy. Reloading alone does not download an update.
 
-Permissões: armazenamento local, escrita na área de transferência e execução do leitor no backoffice indicado. Não lê credenciais, cookies nem área de transferência. Não controla a página do WhatsApp; não tem servidor, telemetria ou envio automático.
+See the [Portuguese guide](docs/README.pt.md) for configuration, image limits, updates, and troubleshooting.
 
-O leitor usa `#telemovelttnc`, `.cust_name` e `#sendAppInviteBtn`. Lê o valor atual do campo, não o placeholder. Interpreta números nacionais pelo país selecionado e respeita indicativos explícitos. Campos ambíguos, duplicados ou indisponíveis impedem a preparação.
+## Privacy and permissions
 
-A estrutura completa da janela real não foi fornecida. A validação usa uma simulação com dados fictícios e uma extensão instalada num perfil Brave isolado. Consulte `VALIDATION.txt` para resultados e limites. A ficha Zappy real e a colagem final no WhatsApp ainda precisam de confirmação no computador de utilização.
+Customer details are read from the open record and held in memory for conversation preparation. The extension does not maintain a customer database, saved conversation drafts, or message history.
 
-Remover a extensão apaga as suas definições locais. Atualizações são manuais.
+Templates, salon settings, app links, and PNGs are stored in `chrome.storage.local` in the browser profile. Personal information placed in saved templates or images is stored with them. This is local configuration storage, not a secure secrets vault.
 
-## Desenvolvimento
+| Access | Purpose |
+|---|---|
+| `storage` | Save configuration and optional PNGs locally |
+| `clipboardWrite` | Copy a PNG after an explicit user action |
+| Zappy backoffice content-script match | Read customer fields and display the helper |
 
-Node 22.12+ ou Node 24 e npm:
+**Both text and image workflows open a URL containing the recipient number and prepared message text.** That URL can appear in browser history. Image copying replaces clipboard contents; attachment remains manual.
+
+The extension has no backend or telemetry code, does not request access to WhatsApp pages, and does not read cookies, credentials, or clipboard contents. Removing it clears its local configuration.
+
+## Development and validation
+
+TypeScript source lives in [`src/`](src/); committed browser-loadable files live in [`extension/`](extension/).
+
+With Node.js 22.12+ in the Node 22 line, or Node 24:
 
 ```sh
 npm ci --ignore-scripts
-npm run build
 npm run check
+npm run build
 npm test
 ```
 
-Código em `src/`; extensão pronta a carregar em `extension/`. O build preserva as licenças da biblioteca de números e gera `tests/settings-fixture.html` a partir da página real, evitando uma segunda interface desatualizada.
+Regression tests exercise production phone, template, configuration, and customer-adapter modules. A separate installed-extension browser check validates the synthetic DOM contract, recipient-change protection, intercepted WhatsApp handoff, and real settings behavior. See [browser prerequisites](docs/development.md#browser-validation).
 
-`tests/fixture.html` e `tests/settings-fixture.html` usam dados fictícios e APIs simuladas. Para uso interativo, sirva o repositório num servidor HTTP local. Os links de saída da ficha são capturados sem abrir o WhatsApp.
+The screenshots above and in the user guide were captured with the actual installed extension in isolated Chromium. Recipient display, template expansion, options rendering, and an intercepted WhatsApp handoff were checked using synthetic data.
 
-`tests/browser-check.mjs` valida a extensão real num perfil descartável. Usa uma instalação existente de Playwright. Configure `PLAYWRIGHT_MODULE` com o caminho absoluto de `playwright/index.mjs`, `BROWSER_PATH` com Brave/Chromium e, opcionalmente, `VALIDATION_TEMP` com uma pasta temporária existente. Execute:
+See [development and validation notes](docs/development.md) for command results, historical coverage, and live-environment boundaries.
 
-```sh
-node tests/browser-check.mjs
-```
+## Limitations
 
-O teste interceta o Zappy e os links WhatsApp com páginas sintéticas. Guarda capturas e o perfil isolado na pasta temporária indicada no resultado. Não usa o perfil pessoal, não envia mensagens e não altera registos Zappy.
+- The adapter depends on Zappy's customer-record DOM. Host UI changes can require an adapter update.
+- Missing, duplicated, loading, or invalid fields block preparation rather than selecting a guessed recipient.
+- A valid phone number does not confirm a WhatsApp account.
+- WhatsApp controls sender account and Web/Desktop routing. PNGs require manual attachment and do not automatically become message captions.
+- Browser validation used synthetic pages. Live Zappy compatibility and final image paste in WhatsApp still need confirmation in the intended environment.
+- Installation and updates are manual; no GitHub release package is currently published.
 
-Ícone WhatsApp incorporado de [Simple Icons](https://github.com/simple-icons/simple-icons/blob/develop/icons/whatsapp.svg), obtido em 2026-09-26, sob [CC0 1.0](https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md). WhatsApp é marca da respetiva entidade; a extensão não é afiliada. Os restantes ícones são SVG simples desenhados para esta interface. Nenhum ícone é carregado da rede durante a utilização.
+## Issues, status, and licence
 
-Não acrescente permissões de outros sites, APIs privadas ou envio automático para resolver problemas de seletores. Ajustes do leitor pertencem a `src/adapter.ts`.
+Report reproducible problems through [GitHub Issues](https://github.com/Woddy23/Zappy-Whatsapp/issues). Include browser version and steps using fictitious data. Do not include customer details, cookies, authentication links, or unsanitized screenshots.
+
+Version `0.1.0`. Independent integration; not affiliated with Zappy or WhatsApp.
+
+No project-level licence is currently included. Public availability does not grant an open-source reuse licence. Third-party components retain their own licences; see [dependency licence files](extension/) and [asset attribution](docs/architecture.md#asset-attribution).
