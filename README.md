@@ -1,10 +1,12 @@
 # Zappy WhatsApp Helper
 
-Prepare personalized WhatsApp messages from a Zappy customer record, without copying the recipient and composing the same text each time.
+Prepare personalized WhatsApp conversations directly from the customer record your salon staff already use in Zappy.
 
 **The extension prepares the conversation. You review and send in WhatsApp.**
 
-[Português: instalação e utilização](docs/README.pt.md) · [Install](#install-and-use) · [Engineering details](docs/architecture.md)
+[![Checks](https://github.com/Woddy23/Zappy-Whatsapp/actions/workflows/check.yml/badge.svg)](https://github.com/Woddy23/Zappy-Whatsapp/actions/workflows/check.yml)
+
+[Português: instalação e utilização](docs/README.pt.md) · [Features](#features) · [Install](#install-and-use) · [Engineering details](docs/architecture.md)
 
 ![WhatsApp helper beside a synthetic Zappy customer record, showing a fictitious recipient and reusable message templates](docs/assets/customer-panel.png)
 
@@ -14,21 +16,28 @@ Prepare personalized WhatsApp messages from a Zappy customer record, without cop
 
 Salon staff already work inside Zappy customer records. Moving to WhatsApp means finding the right number and preparing messages that often repeat the same instructions.
 
-Built by [Rafael Lopes](https://github.com/Woddy23) for this Portuguese-speaking salon workflow, the extension adds message preparation to the existing record. It uses the primary phone number, fills reusable templates, and leaves the final action with the person contacting the customer.
+Built by [Rafael Lopes](https://github.com/Woddy23) for this Portuguese-speaking salon workflow, the extension brings recipient selection and reusable messages into the existing record. Staff can prepare greetings, app-access instructions, or a custom message without maintaining a separate customer list.
 
-## What it does
+## Features
 
-- Reads the current customer's name and primary phone number.
-- Validates international numbers and uses the selected country for national numbers.
-- Prepares reusable templates with customer name, salon name, and app-link variables.
-- Supports one-off messages and optional PNGs copied for manual attachment.
-- Saves configuration locally and blocks preparation when the recipient cannot be identified safely.
+| Feature | What it provides |
+|---|---|
+| **Customer-aware preparation** | Reads the name and primary phone number from the open record and displays the recipient before handoff |
+| **International phone handling** | Validates explicit international numbers and uses the selected country for national numbers |
+| **Reusable messages** | Up to 8 configurable templates with customer name, salon name, and app-link variables |
+| **One-off messages** | Write a custom message for the current customer without changing a saved template |
+| **Optional PNGs** | Associate an image with a template, copy it on request, and paste it manually in WhatsApp |
+| **Settings with live preview** | Edit templates, insert variables, and preview text using a fictitious customer |
+| **Local configuration** | Keep templates and images in the browser profile, with migration support and stale-editor protection |
+| **Recipient-change protection** | Clear an old draft when the record changes and block missing, invalid, or ambiguous recipients |
 
 It does not send automatically, select the sender's WhatsApp account, or replace Zappy's native app-invitation action.
 
 ## How it works
 
-A content script reads the visible customer record. A DOM adapter identifies the fields, phone validation normalizes the recipient, and the template engine prepares the message. The extension opens a WhatsApp conversation URL; the user reviews and sends there.
+**Open customer record → check recipient → choose message → review and send in WhatsApp.**
+
+A content script reads the visible record. The adapter identifies customer fields, validates the phone number, and fills template variables. The extension then opens a WhatsApp conversation URL with the prepared recipient and text.
 
 For image messages, the PNG is copied after a user click and pasted manually in WhatsApp. The image is not attached through the URL.
 
@@ -98,19 +107,18 @@ npm run build
 npm test
 ```
 
-Regression tests exercise production phone, template, configuration, and customer-adapter modules. A separate installed-extension browser check validates the synthetic DOM contract, recipient-change protection, intercepted WhatsApp handoff, and real settings behavior. See [browser prerequisites](docs/development.md#browser-validation).
+**11 regression tests** exercise production phone, template, configuration, and customer-adapter modules, including image-size and storage-budget rejection. GitHub Actions runs installation, type checking, build, and tests on push and pull request.
 
-The screenshots above and in the user guide were captured with the actual installed extension in isolated Chromium. Recipient display, template expansion, options rendering, and an intercepted WhatsApp handoff were checked using synthetic data.
+A separate installed-extension browser check covers recipient-change protection, intercepted WhatsApp handoff, and real settings behavior against a synthetic Zappy fixture. Run `npm run test:browser` after following the [browser prerequisites](docs/development.md#browser-validation). It does not contact a real WhatsApp conversation or send messages.
 
 See [development and validation notes](docs/development.md) for command results, historical coverage, and live-environment boundaries.
 
 ## Limitations
 
 - The adapter depends on Zappy's customer-record DOM. Host UI changes can require an adapter update.
-- Missing, duplicated, loading, or invalid fields block preparation rather than selecting a guessed recipient.
 - A valid phone number does not confirm a WhatsApp account.
 - WhatsApp controls sender account and Web/Desktop routing. PNGs require manual attachment and do not automatically become message captions.
-- Browser validation used synthetic pages. Live Zappy compatibility and final image paste in WhatsApp still need confirmation in the intended environment.
+- Automated browser validation checks the expected DOM contract using synthetic pages; it does not establish compatibility with every live Zappy layout or WhatsApp client.
 - Installation and updates are manual; no GitHub release package is currently published.
 
 ## Issues, status, and licence
